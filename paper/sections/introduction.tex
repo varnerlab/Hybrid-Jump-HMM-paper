@@ -1,0 +1,97 @@
+% introduction.tex
+% Introduction: motivation, technical gap, contribution, roadmap.
+
+Portfolio construction, risk attribution, and stress testing often
+take long synthetic time series of asset growth rates as inputs. A
+good generator has to satisfy two things the downstream consumer
+cares about. First, each single asset's synthetic series should look
+like its real counterpart when you histogram it day by day: the tails
+should be as heavy as real tails, the kurtosis should match, regimes
+and jumps should show up with roughly the right frequency; in
+statistical language this is the \emph{marginal distribution} of the
+asset. Second, a stack of synthetic series across many assets should
+co-move the way real markets co-move: on a day when the market
+plunges, stocks with high factor loadings should plunge with it, tail
+co-movement should look realistic, and factor structure should be
+intact; this is the \emph{cross-sectional dependence} across assets.
+The two requirements are largely orthogonal, and off-the-shelf
+generators tend to handle only one of them. Per-asset generators
+built from hidden Markov models~\cite{hamilton1989}, generalized
+autoregressive conditional heteroskedasticity (GARCH)
+families~\cite{bollerslev1986}, or empirical
+bootstraps~\cite{politisRomano1994} handle the first: fit one of
+these models to AAPL's growth-rate history and its synthetic paths
+carry AAPL's tail thickness, kurtosis, and regime structure. But the
+fit knows nothing about SPY, MSFT, or any other asset. Stack the
+per-asset draws into a joint object, a matrix of synthetic
+growth-rate time series $\{\teps_i\}_{i=1}^N$ with one $T$-length
+path per asset, each $\teps_i$ matching its own asset's full-return
+marginal, and the paths drift independently: on a day when synthetic
+SPY plunges, synthetic AAPL has no reason to plunge with it. Real
+AAPL would. Closing this gap without breaking the per-asset marginals
+is the problem the rest of this paper addresses. The standard recipe for adding
+factor structure is the single-index model (SIM) of
+Sharpe~\cite{sharpe1963}, which writes each asset's growth rate as
+$g_i = \alpha_i + \beta_i g_m + \eps_i$ with $\eps_i$ idiosyncratic.
+Applied naively on top of a per-asset generator, the recipe sets
+$\eps_i = \teps_i$ and inflates the marginal variance of $g_i$ by
+exactly $\beta_i^2 \sigma_m^2$. For high-$\beta$ assets the inflation
+is large enough to be visible in the empirical marginal: the body
+widens, the kurtosis drops, and the heavy tails that the generator was
+built to deliver are pushed out into a Gaussian-flavored bulge driven
+by the market term. This defeats the purpose of fitting a heavy-tailed
+generator in the first place. The dual failure mode,
+$\eps_i \sim \mathcal{N}(0, \sigma_{\eps,\real}^2)$ with the residual
+variance taken from the real ordinary least squares (OLS) fit,
+recovers the SIM coefficients
+exactly but erases the marginal structure entirely.
+
+This paper describes a closed-form variance correction that sits
+between the two failure modes. Setting $\eps_i = s_i\,\teps_i$ for a
+scalar $s_i \in (0,1]$ chosen so that the variance algebra works out to
+preserve the generator marginal, the scalar admits a closed form,
+$s_i^2 = 1 - \beta_i^2 \sigma_m^2 / \sigma_{\gen,i}^2$
+(Eq.~\ref{eq:scale}), defined whenever the bracketed quantity is
+positive. When it is not (high $\beta_i$ paired with a low-volatility
+generator, or a synthetic market more volatile than the calibration
+market), $\beta_i$ is clipped downward against a floor that reserves a
+configurable share of the marginal variance for idiosyncratic noise,
+with a sign-preserving clip (Eq.~\ref{eq:clip}) that keeps defensive
+assets defensive. A separate $R^2$-preserving branch
+(Eq.~\ref{eq:r2-target}) handles index-tracking assets, where the
+calibrated $R^2$ rather than the generator marginal is the quantity
+worth preserving; SPY against itself recovers as the degenerate
+$R^2 = 1$ limit with no special-casing. Branch selection is driven
+entirely by the calibrated $R^2$, and each asset carries a persisted
+construction flag (\texttt{hybrid}, \texttt{hybrid-clipped},
+\texttt{r2-preserve}) so downstream consumers can audit which path
+each asset took. The procedure generalizes to any new ticker without
+external metadata.
+
+In this study, we tested the construction on the $424$-ticker US
+equity universe and SPY market path used by the companion
+\texttt{JumpHMM.jl} validation paper of Alswaidan and
+Varner~\cite{alswaidanVarner2026jdiq}, comparing three composition
+recipes on the same generators and the same market path: the naive
+composition, a Gaussian-residual SIM that recovers the calibrated
+$(\alpha, \beta, R^2)$ but loses the marginal structure, and the
+hybrid construction of Section~\ref{sec:method}. We measured SIM
+recovery, marginal fidelity, and cross-sectional dependence, reporting
+each per construction-flag branch. The hybrid construction held the
+SIM-recovery error of the naive composition while holding the
+marginal-fidelity error of the Gaussian-residual baseline across the
+full range of empirical $\beta_i$; on the aggregate scorecard it
+recovered $\beta$ to a median absolute error of $0.018$ and passed a
+per-ticker Kolmogorov--Smirnov test against the real marginal at rate
+$50.4\%$, compared to $4.5\%$ for the naive composition and $0.6\%$
+for the Gaussian baseline. The broader implication is that the
+marginal-versus-factor tradeoff long assumed in SIM composition is not
+fundamental: a single closed-form scalar correction closes the gap,
+and the correction generalizes to richer factor structures
+(multi-factor SIM, lagged-factor SIM) without changing the underlying
+algebra. The remainder of the paper formalizes the preservation criteria and
+derives the variance correction and the $R^2$-preserving branch
+(Section~\ref{sec:method}), describes
+reports the experimental protocol and the recovery and fidelity
+metrics (Section~\ref{sec:results}), and discusses caveats and
+extensions (Section~\ref{sec:discussion}).

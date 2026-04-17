@@ -1,0 +1,231 @@
+\documentclass{article}
+\PassOptionsToPackage{numbers, compress}{natbib}
+\usepackage[preprint]{neurips_2026}
+
+% --- standard packages ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[colorlinks=true,linkcolor=blue!70!black,citecolor=blue!70!black,urlcolor=blue!70!black]{hyperref}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{amsfonts}
+\usepackage{nicefrac}
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{bm}
+\usepackage{multirow}
+
+% --- figure/table placement ---
+\setcounter{topnumber}{1}
+\setcounter{bottomnumber}{1}
+\renewcommand{\topfraction}{0.5}
+
+% --- theorem environments ---
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+% --- custom commands ---
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Var}{\operatorname{Var}}
+\newcommand{\Cov}{\operatorname{Cov}}
+\newcommand{\sign}{\operatorname{sign}}
+\newcommand{\eps}{\varepsilon}
+\newcommand{\teps}{\tilde{\varepsilon}}
+\newcommand{\gen}{\mathrm{gen}}
+\newcommand{\real}{\mathrm{real}}
+\newcommand{\eff}{\mathrm{eff}}
+
+\title{Variance-Corrected Single-Index Composition for Heavy-Tailed Return Generators}
+
+\author{%
+  Jeffrey D.~Varner \\
+  Robert Frederick Smith School of Chemical and Biomolecular Engineering\\
+  Cornell University, Ithaca, NY 14850 \\
+  \texttt{jdv27@cornell.edu} \\
+}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+\input{sections/abstract}
+\end{abstract}
+
+\section{Introduction}\label{sec:introduction}
+\input{sections/introduction}
+
+\section{Method}\label{sec:method}
+\input{sections/method}
+
+\section{Results}\label{sec:results}
+\input{sections/results}
+
+\section{Discussion}\label{sec:discussion}
+\input{sections/discussion}
+
+\section*{Acknowledgments}
+The author thanks Abdulrahman Alswaidan and the eCornell AI in Finance
+program participants for discussions that motivated the variance-correction
+formulation, and Polygon.io for access to the 2014 to 2024 US equity and
+ETF daily price histories used in the experiments. Computations were
+run on a single laptop; no shared-resource allocation was required.
+
+\paragraph{Author contributions.}
+J.D.V.\ developed the method, wrote the code, performed the experiments, and wrote the paper.
+
+\paragraph{Competing interests.}
+The author declares no competing interests.
+
+\paragraph{Code and data availability.}
+Source code and experiment scripts are available at
+\url{https://github.com/varnerlab/hybrid-sim-composition}. The
+per-asset hidden Markov model generators rely on \texttt{JumpHMM.jl}
+(\url{https://github.com/varnerlab/JumpHMM.jl}).
+
+\bibliographystyle{unsrtnat}
+\bibliography{References_v1}
+
+% --- Figures and Tables (placed after bibliography, PNAS-style) ---
+\clearpage
+
+% -----------------------------------------------------------------------
+% Table 1: Aggregate scorecard across composers
+% -----------------------------------------------------------------------
+\begin{table}[p]
+  \centering
+  \caption{\textbf{Aggregate scorecard across $423$ non-market tickers and
+    $100$ replications per ticker.} Median values per composer.
+    $|\hat\beta - \beta|$ and $|\hat R^2 - R^2_{\real}|$: absolute deviation
+    between OLS recovery and calibration. KS pass and AD pass: fraction of
+    replications whose two-sample test against the real marginal exceeds
+    $p = 0.05$. $W_1$: Wasserstein-1 distance to the real marginal.
+    $\kappa$: sample excess kurtosis. Hill: tail-index estimate on the
+    upper $5\%$ of $|g|$. All three composers recover $\beta$ to the same
+    precision; only the hybrid composer preserves the marginal
+    distribution (KS pass $50.4\%$) while holding the variance close to
+    the generator target.}
+  \label{tab:aggregate}
+  \small
+  \input{sections/tables/table1_aggregate}
+\end{table}
+
+% -----------------------------------------------------------------------
+% Table 2: Per-construction-flag breakdown (hybrid only)
+% -----------------------------------------------------------------------
+\begin{table}[p]
+  \centering
+  \caption{\textbf{Hybrid composer broken out by construction flag.}
+    $N_{\mathrm{tickers}}$: number of tickers assigned to each branch by
+    the $R^2_{\mathrm{preserve}} = 0.80$ threshold. The
+    \texttt{hybrid-clipped} branch does not trigger anywhere in the
+    universe ($\rho_i < 0.90$ for all tickers) and is omitted.
+    The two trackers in the \texttt{r2-preserve} branch (QQQ and SPYG)
+    attain a KS pass rate of $99\%$, consistent with the branch
+    recovering both $\beta$ and $R^2$ by construction.}
+  \label{tab:branch}
+  \small
+  \input{sections/tables/table2_by_branch}
+\end{table}
+
+% -----------------------------------------------------------------------
+% Table 3: Per-beta-bucket breakdown
+% -----------------------------------------------------------------------
+\begin{table}[p]
+  \centering
+  \caption{\textbf{Aggregate metrics by $\beta$ quartile, across composers.}
+    Quartile cutoffs are computed from the calibrated $\beta$ distribution
+    across the $423$-ticker universe. The hybrid KS pass rate declines
+    gently from $67\%$ in Q1 to $44\%$ in Q4 as the market loading ratio
+    $\rho_i$ grows, consistent with the tail-attenuation caveat of
+    Section~\ref{sec:method-properties}; naive collapses from $16\%$ to
+    under $1\%$ over the same range.}
+  \label{tab:beta_bucket}
+  \small
+  \input{sections/tables/table3_by_beta_bucket}
+\end{table}
+
+% -----------------------------------------------------------------------
+% Figure 1: Preservation headline
+% -----------------------------------------------------------------------
+\begin{figure}[p]
+  \centering
+  \includegraphics[width=\textwidth]{figs/fig1_preservation.pdf}
+  \caption{\textbf{Marginal-distribution preservation and variance
+    preservation vs calibrated $\beta$.}
+    Each point is a per-ticker median over $100$ replications.
+    \emph{Left:} Kolmogorov--Smirnov pass rate against the real marginal
+    at $\alpha = 0.05$. The hybrid composer (orange) maintains a pass
+    rate between $\sim 0.3$ and $\sim 0.9$ across the full $\beta$ range;
+    the naive composer (blue) collapses past $\beta \approx 0.7$ as the
+    market loading inflates the marginal variance; the Gaussian SIM
+    baseline (purple) is pinned at zero throughout.
+    \emph{Right:} variance ratio $\mathrm{Var}(g)/\sigma^2_{\mathrm{gen}}$.
+    The dotted curve is the theoretical naive inflation $1 + \rho$
+    evaluated at the universe-median $\sigma^2_{\mathrm{gen}}$; the naive
+    scatter follows it. Hybrid and Gaussian SIM sit on the unit line by
+    design.}
+  \label{fig:preservation}
+\end{figure}
+
+% -----------------------------------------------------------------------
+% Figure 2: Tails and kurtosis
+% -----------------------------------------------------------------------
+\begin{figure}[p]
+  \centering
+  \includegraphics[width=\textwidth]{figs/fig2_tails.pdf}
+  \caption{\textbf{Heavy-tail preservation: excess kurtosis and Hill
+    tail index vs calibrated $\beta$.}
+    Each point is a per-ticker median over $100$ replications.
+    \emph{Left:} excess kurtosis, $y$-axis clipped to $[-2, 20]$ for
+    readability. The dashed line marks the median real-data excess
+    kurtosis across the universe ($\kappa_{\real} \approx 13$); the
+    hybrid and naive composers (orange and blue) track the generator's
+    kurtosis, while Gaussian SIM collapses to $\kappa \approx 1$.
+    \emph{Right:} Hill tail-index estimator on the upper $5\%$ of
+    $|g|$. The hybrid and naive medians sit near $0.37$ throughout the
+    $\beta$ range; Gaussian SIM drops to $\sim 0.22$, indicating the
+    shift toward a thinner-tailed distribution. The hybrid's median
+    sitting below $\kappa_{\real}$ reflects the JumpHMM marginal's own
+    kurtosis rather than a composition-rule distortion; the panel's
+    point is that hybrid tracks naive (inheriting generator tails)
+    while Gaussian SIM does not.}
+  \label{fig:tails}
+\end{figure}
+
+% -----------------------------------------------------------------------
+% Figure 3: Branch map in (beta, R^2) space
+% -----------------------------------------------------------------------
+\begin{figure}[p]
+  \centering
+  \includegraphics[width=0.85\textwidth]{figs/fig3_branch_map.pdf}
+  \caption{\textbf{Construction-flag assignment in calibrated
+    $(\beta, R^2_{\real})$ space.}
+    The $R^2_{\mathrm{preserve}} = 0.80$ threshold (dashed line) separates
+    tracker assets from genuine single stocks. In this universe, only
+    QQQ and SPYG exceed the threshold, and both are assigned to the
+    \texttt{r2-preserve} branch. The remaining $421$ tickers populate the
+    \texttt{hybrid} (variance-preserving) branch; the
+    \texttt{hybrid-clipped} branch is unused because the market loading
+    ratio $\rho_i = \beta_i^2 \sigma_m^2 / \sigma_{\gen,i}^2$ stays
+    below $0.90$ for every ticker.}
+  \label{fig:branch_map}
+\end{figure}
+
+% --- SI Appendix (no supplemental material at this stage) ---
+
+\end{document}

@@ -1,0 +1,8 @@
+Manifest.toml
+data/*.jld2
+data/*.csv
+figs/*.pdf
+figs/*.png
+figs/*.svg
+*.log
+.DS_Store

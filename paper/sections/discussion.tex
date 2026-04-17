@@ -1,0 +1,119 @@
+% discussion.tex
+% Discussion: scope, caveats, and extensions.
+
+In this study, we composed synthetic per-asset growth-rate paths
+under a single-index model (SIM) by drawing each asset's innovation
+from an independent JumpHMM generator fit to the asset's own
+full-return history, then rescaling the draw by a closed-form scalar
+before inserting it into the SIM composition. We evaluated three
+composers on a calibrated universe of $424$ US equities and
+exchange-traded funds against the real SPY market path: the naive
+composition, a Gaussian-residual SIM baseline, and the hybrid
+construction proposed here. The one-line variance correction,
+together with the sign-preserving clip rule and the $R^2$-preserving
+branch, closes a gap between two previously unsatisfying options for
+building synthetic asset paths with both marginal structure and
+factor structure: naive composition gives both but distorts the
+marginal by $\beta^2 \sigma_m^2$, while Gaussian-residual SIM gives
+the factor exactly but strips the marginal. The hybrid construction
+sat between the two: it recovered $\beta$ to the same precision as
+either baseline, held the generator marginal to its target variance
+in every ticker, and preserved the generator's tails at a level
+indistinguishable from the naive composition. The gap was large
+enough to matter in practice: at the high-$\beta$ end of the
+universe, naive composition inflated the marginal variance by over
+$70\%$ relative to the generator target. Because branch selection is
+driven entirely by the calibrated $R^2$ and each asset carries a
+persisted construction flag, the procedure runs uniformly across an
+arbitrary ticker universe without external metadata and leaves an
+audit trail that downstream consumers can inspect. No part of the
+construction is new in a deep sense; the contribution is a minimal,
+practitioner-ready recipe with an auditable branch flag and a
+principled treatment of the degenerate tracker limit, usable as a
+drop-in replacement for naive composition in workflows where both
+tail shape and market dependence matter.
+
+The evaluation isolated the composition rule by fixing the market
+path at the real SPY history and using the
+same per-ticker innovation draw across all three composers. This design
+yielded a paired comparison of composition rules at the per-ticker level
+but set aside two questions that production users will need to address
+separately. The first concerns cross-sectional dependence: we skipped
+the optional rank-reorder step in Algorithm~\ref{alg:hybrid} so that
+per-ticker metrics reflected the composition rule alone. When the
+reorder is applied, the variance algebra is unchanged
+(rank-reordering preserves the marginal variance of $\eps_i$), so the
+marginal results here carry over; cross-sectional fidelity under
+different copula specifications is studied in the companion
+\texttt{JumpHMM.jl} paper~\cite{alswaidanVarner2026jdiq}. The second
+concerns market-path uncertainty: the metrics reported here used the
+real SPY path, and under a simulated market path the composed
+marginal picks up additional variance from the sampling of
+$g_m^{(r)}$, which for high-$R^2$ tickers becomes a noticeable
+effect. In production, the two deferred questions compose:
+a reorder-plus-simulated-market pipeline would layer cross-sectional
+structure on top of per-ticker draws built against sampled market
+paths, with the variance correction of Eq.~\eqref{eq:scale} still
+providing the per-asset variance target on each realized
+$g_m^{(r)}$.
+
+Clipping did not trigger anywhere in the US-equity universe used here,
+because the JumpHMM marginals carried enough variance that
+$\rho_i = \beta_i^2 \sigma_m^2 / \sigma_{\gen,i}^2$ stayed below $0.90$
+even for the highest-$\beta$ ticker. Clipping becomes relevant in two
+settings we did not evaluate: scenario-driven markets, where the
+synthetic $g_m$ is constructed to be much more volatile than the
+calibration market (e.g., stress tests), and universes that mix
+low-volatility single stocks with extreme betas (e.g., leveraged ETFs).
+In both settings we recommend reporting the original and effective
+$\beta_i$ alongside the output, as in Algorithm~\ref{alg:hybrid}, so
+that downstream consumers can audit the attenuation. A related
+attenuation appeared at the other end of the $\beta$ spectrum, even
+when clipping did not trigger: the $\beta$-bucket breakdown in
+Table~\ref{tab:beta_bucket} showed the hybrid KS pass rate falling from
+$67\%$ at low $\beta$ to $44\%$ at high $\beta$, a mild attenuation that
+followed directly from the composition algebra. As
+$\beta_i^2 \sigma_m^2$ grows toward the idiosyncratic floor
+$(1 - f)\sigma_{\gen,i}^2$, the market-driven component carries an
+increasing share of the marginal, and that component is only as
+heavy-tailed as $g_m$. The market's own heavy tails slow the attenuation
+(SPY growth rates are themselves heavy-tailed after JumpHMM fitting),
+but the effect is visible. Users who need exact marginal fidelity at
+high $\beta$ can recover it by lowering the floor $f$ (at the cost of
+less conservative clipping behavior) or by pre-scaling the generator
+variance so that $\rho_i$ stays small.
+
+The variance correction $s_i^2 = 1 - \rho_i$ relies on
+$\mathrm{Cov}(\teps_i, g_m) \approx 0$. The JumpHMM marginals are fit
+in isolation and sampled independently of the market path, so this
+holds by construction; if the generator is already correlated with
+the market (for example, a bootstrap from joint history), the
+empirical covariance should be subtracted from $\beta_i$ before
+applying the correction, or $s_i^2$ should be estimated directly from
+the empirical variance of the composed series. The same warning
+applies to the $R^2$-preserving branch, whose variance identity
+assumes $\eps$ is uncorrelated with $g_m$ after any reorder. The
+construction also injects a contemporaneous market factor only:
+$g_i(t)$ depends on $g_m(t)$ and on $\teps_i(t)$ but not on
+$g_m(t-1), g_m(t-2), \dots$, so lagged market dependence (lead-lag
+effects, market-driven volatility clustering, asymmetric responses to
+drawdowns) is not reproduced by this recipe. The natural extension is
+a lagged-factor SIM,
+$g_i(t) = \alpha_i + \sum_{k=0}^K \beta_{i,k}\, g_m(t - k) + \eps_i(t)$;
+the variance correction generalizes to that form by replacing
+$\beta_i^2 \sigma_m^2$ with the variance of the full market-factor
+component, though the empirical value of the extra parameters is
+beyond the scope here. Two further extensions follow naturally:
+multi-factor SIM replaces the single market factor with $K$ factors,
+requiring $\rho_i$ to become the sum of factor contributions and the
+loading vector to be clipped rather than a scalar (the branch logic
+is unchanged), and per-ticker tuning of the JumpHMM jump parameters
+$(\epsilon, \lambda)$ tightens each marginal's fit (we used defaults
+to keep fitting tractable across the universe, but tuning as reported
+in the companion paper~\cite{alswaidanVarner2026jdiq} would push the
+hybrid KS pass rates upward). A
+stress-test harness ties these together: using the clipping rule to
+enforce a minimum idiosyncratic share in constructed market scenarios
+guarantees that per-asset marginals remain heavy-tailed even under
+synthetic markets much more volatile than history, which is precisely
+the regime where naive SIM composition breaks down most severely.

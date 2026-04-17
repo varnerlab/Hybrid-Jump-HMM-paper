@@ -1,0 +1,29 @@
+# config.toml
+# Experiment configuration for the hybrid SIM composition study.
+
+[universe]
+market_ticker     = "SPY"
+min_obs_required  = 2766          # IS window length, matches JDIQ paper
+
+[window]
+in_sample_start   = "2014-01-03"
+in_sample_end     = "2024-12-31"
+
+[hmm]
+N                 = 100             # number of states
+nu                = 5.0             # Student-t emission df
+risk_free_rate    = 0.0
+dt                = 0.003968253968254  # 1/252
+
+[hybrid]
+r2_preserve_threshold = 0.80
+idiosyncratic_floor   = 0.10
+
+[simulation]
+n_paths           = 100           # pilot run; bump to 1000 once headline numbers look right
+seed              = 1234
+
+[paths]
+# Optional override: where to find the cached JumpHMM market model and per-ticker
+# fits from the JDIQ companion paper. If absent, scripts will refit from scratch.
+jdiq_root         = "../../julia_work/HMM-w-jumps-paper/code"
