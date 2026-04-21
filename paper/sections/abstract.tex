@@ -12,7 +12,7 @@ preserve; replacing the generator residual with a Gaussian draw
 eliminates the distortion but discards the marginal entirely. We
 derived a closed-form variance correction that sits between these two
 failure modes, rescaling the idiosyncratic draw by a scalar chosen so
-that the composed series inherited the generator's marginal variance
+that the composed series inherits the generator's marginal variance
 exactly while recovering the calibrated factor loading. The correction
 was paired with a sign-preserving clip that engaged whenever the market
 component would have exceeded the generator variance, keeping defensive
@@ -22,11 +22,12 @@ marginal, with the SPY-on-itself identity recovered as a degenerate
 limit without special-casing. Branch selection was driven entirely by
 the calibrated coefficient of determination, requiring no external
 metadata, and each asset carried a persisted construction flag so
-downstream consumers could audit which path it took. Evaluated on a
-424-ticker US equity and exchange-traded fund (ETF) universe against
-the SPY market path
-using \texttt{JumpHMM.jl} marginals, the hybrid construction recovered
-the factor loading as precisely as either baseline while preserving
-the heavy-tailed marginal across the full empirical range of factor
-loadings. All artifacts, scripts, and the fitted marginal cache are
+downstream consumers could audit which path it took. Evaluated on a 424-ticker US equity and exchange-traded fund (ETF)
+universe against the SPY market path using \texttt{JumpHMM.jl}
+marginals, the hybrid construction recovered the factor loading to a
+median absolute error of $0.018$ and passed a per-ticker
+Kolmogorov--Smirnov test against the real marginal at rate $50.4\%$,
+compared with $4.5\%$ for the naive composition and $0.6\%$ for the
+Gaussian-residual baseline, preserving the heavy-tailed marginal
+across the full empirical range of factor loadings. All artifacts, scripts, and the fitted marginal cache are
 released with the paper.

@@ -20,24 +20,11 @@ the form:
   \label{eq:sim-composition}
 \end{equation}
 from an independent generator draw $\teps_i \in \R^T$ and a shared
-market path $g_m \in \R^T$ over $T$ trading days, with sample
-variances $\sigma_{\gen,i}^2 = \Var[\teps_i]$ and
-$\sigma_m^2 = \Var[g_m]$. The residual $\eps_i$ in
-\eqref{eq:sim-composition} is obtained by rescaling the generator
-draw, $\eps_i = s_i\,\teps_i$, with the scalar $s_i \in (0, 1]$ chosen
-so that ordinary least squares (OLS) of $g_i$ on $g_m$ recovers the
-calibrated single-index model (SIM) coefficients
-$(\alpha_i, \beta_i)$ in the large-$T$ limit, and so that the composed
-marginal satisfies one of two preservation targets. For assets whose
-generator marginal carries the structure of interest (heavy tails,
-regime switching, jumps), the variance-preserving branch picks $s_i$
-so that $\Var[g_i] = \sigma_{\gen,i}^2$. For assets that track the
-market closely, the $R^2$-preserving branch picks $s_i$ so that the
-calibrated real-data coefficient of determination $R^2_{i,\real}$
-(the OLS $R^2$ from the asset's real return history against the real
-market path) is recovered exactly. Branch selection is driven by the
-calibrated $R^2$ alone, so the procedure generalizes to any new
-ticker without external metadata.
+market path $g_m \in \R^T$ over $T$ trading days by rescaling the
+generator draw as $\eps_i = s_i\,\teps_i$ with a scalar
+$s_i \in (0,1]$ chosen to preserve one of two per-asset marginal
+targets while recovering the calibrated single-index model (SIM)
+coefficients $(\alpha_i, \beta_i)$ in the large-$T$ limit.
 
 \subsection{Problem setup}
 \label{sec:method-setup}
@@ -88,7 +75,9 @@ Section~\ref{sec:method-r2}.
 \label{sec:method-criteria}
 
 We want the synthetic composition
-$g_i = \alpha_i + \beta_i^{\eff}\, g_m + \eps_i$ to satisfy three
+$g_i = \alpha_i + \beta_i^{\eff}\, g_m + \eps_i$, with effective slope
+$\beta_i^{\eff}$ (equal to $\beta_i$ on the unclipped branch and the
+attenuated value of Eq.~\eqref{eq:clip} otherwise), to satisfy three
 properties in the large-$T$ limit. The first is \emph{SIM recovery}:
 ordinary least squares of $g_i$ on $g_m$ returns the calibrated
 intercept and slope, $\hat\alpha_i = \alpha_i$ and
@@ -118,15 +107,11 @@ The naive composition $g_i = \alpha_i + \beta_i\, g_m + \teps_i$
 satisfies SIM recovery and cross-sectional dependence but violates
 marginal fidelity: its marginal variance is
 $\sigma_{\gen,i}^2 + \beta_i^2 \sigma_m^2$, an inflation that grows
-quadratically in $\beta_i$. The rest of this section fixes this
-inflation with a single closed-form scalar correction
-(Section~\ref{sec:method-variance}), handles the high-$\beta$
-degenerate case with a sign-preserving clip
-(Section~\ref{sec:method-clipping}), treats index-tracking assets
-through an $R^2$-preserving branch (Section~\ref{sec:method-r2}), and
-ties the pieces together in an algorithm while stating the resulting
-properties of the composed series
-(Section~\ref{sec:method-algorithm}).
+quadratically in $\beta_i$. The rest of this section fixes this inflation with a closed-form
+scalar correction, handles the degenerate high-$\beta$ case with a
+sign-preserving clip, treats index-tracking assets through an
+$R^2$-preserving branch, and ties the pieces together in an algorithm
+that also states the resulting properties of the composed series.
 
 \subsection{Variance correction}
 \label{sec:method-variance}
@@ -138,10 +123,9 @@ variance as the generator,
   \Var[\beta_i\, g_m + \eps_i] \;=\; \sigma_{\gen,i}^2.
   \label{eq:variance-target}
 \end{equation}
-When $\teps_i$ is uncorrelated with $g_m$ (true by construction for
-independent draws, and true after a copula rank reorder when the copula is
-sampled independently of $g_m$), the cross term in \eqref{eq:variance-target}
-vanishes and
+Under the independence assumption of
+Section~\ref{sec:method-setup}, the cross term in
+\eqref{eq:variance-target} vanishes and
 \begin{equation}
   \beta_i^2\, \sigma_m^2 \;+\; s_i^2\, \sigma_{\gen,i}^2 \;=\; \sigma_{\gen,i}^2,
 \end{equation}
@@ -203,10 +187,10 @@ wants to keep. For some assets the generator marginal is not really the
 quantity of interest; the SIM relationship to the market is. Index ETFs are
 the canonical example. SPY against itself has $\beta = 1$, $R^2 = 1$,
 $\sigma_\eps = 0$ exactly. QQQ against SPY has $R^2 \approx 0.84$, SPYG
-against SPY has $R^2 \approx 0.86$. For these tickers the practitioner cares
-that (i) $\hat\beta$ recovers to its calibrated value, and (ii) $R^2$ recovers
-to its calibrated value, neither inflated to one by dropping $\eps$ nor
-implied by unrelated marginal-variance bookkeeping.
+against SPY has $R^2 \approx 0.86$. For these tickers the practitioner cares that $\hat\beta$ recovers
+to its calibrated value and that $R^2$ recovers to its calibrated
+value, neither inflated to one by dropping $\eps$ nor implied by
+unrelated marginal-variance bookkeeping.
 
 We branch on the real-data calibration $R^2_{i,\real}$. Pick a threshold
 $R^2_{\mathrm{preserve}}$ that separates index-tracking assets from
@@ -248,10 +232,9 @@ We detect and flag this case so the loss of marginal fidelity is auditable.
 
 \subsection{Branch selection, algorithm, and properties}
 \label{sec:method-algorithm}
-\label{sec:method-properties}
 
-Algorithm~\ref{alg:hybrid} ties the pieces together. For each asset
-the calibrated $R^2_{i,\real}$ selects a branch: assets with
+The pieces combine into a single procedure (Algorithm~\ref{alg:hybrid}).
+For each asset the calibrated $R^2_{i,\real}$ selects a branch: assets with
 $R^2_{i,\real} \ge R^2_{\mathrm{preserve}}$ go through the
 $R^2$-preserving construction of Section~\ref{sec:method-r2}, and the
 rest go through the variance-preserving construction of

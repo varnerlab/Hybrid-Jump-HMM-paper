@@ -109,7 +109,7 @@ $\rho_i = \beta_i^2 \sigma_m^2 / \sigma_{\gen,i}^2$, overshooting the
 generator variance by $50\%$ to $75\%$ at high $\beta$, while hybrid
 and Gaussian SIM sat on the unit line by design. The KS-pass-rate
 panel showed the consequence: naive fell from a pass rate of
-$\sim 0.25$ at $\beta \approx 0.3$ to effectively zero past
+$\sim 0.25$ at $\beta \approx 0.3$ to below $0.01$ past
 $\beta \approx 0.7$, while hybrid sat between $0.3$ and $0.9$ across
 the full $\beta$ range. Gaussian SIM was pinned to zero throughout;
 with its Gaussian residual it did not match the heavy-tailed real
@@ -154,7 +154,7 @@ in the high-$\beta$ quartile; the Gaussian SIM pass rate stayed pinned
 near zero across all buckets; the naive pass rate collapsed from
 $16\%$ in Q1 to under $1\%$ in Q3 and Q4 as $\beta_i^2 \sigma_m^2$
 grew. The gentle hybrid decline at high $\beta$ reflected the caveat
-noted in Section~\ref{sec:method-properties}: as
+noted in Section~\ref{sec:method-algorithm}: as
 $\beta^{\eff\,2}\sigma_m^2$ grew toward $(1 - f)\sigma_{\gen}^2$, the
 market-driven component of $g$ tightened the marginal toward Gaussian
 along its own axis, mildly attenuating the generator's tails in the

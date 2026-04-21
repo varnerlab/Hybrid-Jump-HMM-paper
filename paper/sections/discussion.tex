@@ -4,7 +4,7 @@
 In this study, we composed synthetic per-asset growth-rate paths
 under a single-index model (SIM) by drawing each asset's innovation
 from an independent JumpHMM generator fit to the asset's own
-full-return history, then rescaling the draw by a closed-form scalar
+full growth-rate history, then rescaling the draw by a closed-form scalar
 before inserting it into the SIM composition. We evaluated three
 composers on a calibrated universe of $424$ US equities and
 exchange-traded funds against the real SPY market path: the naive
@@ -69,10 +69,10 @@ In both settings we recommend reporting the original and effective
 $\beta_i$ alongside the output, as in Algorithm~\ref{alg:hybrid}, so
 that downstream consumers can audit the attenuation. A related
 attenuation appeared at the other end of the $\beta$ spectrum, even
-when clipping did not trigger: the $\beta$-bucket breakdown in
-Table~\ref{tab:beta_bucket} showed the hybrid KS pass rate falling from
-$67\%$ at low $\beta$ to $44\%$ at high $\beta$, a mild attenuation that
-followed directly from the composition algebra. As
+when clipping did not trigger: the hybrid KS pass rate fell from
+$67\%$ at low $\beta$ to $44\%$ at high $\beta$
+(Table~\ref{tab:beta_bucket}), a mild attenuation that followed
+directly from the composition algebra. As
 $\beta_i^2 \sigma_m^2$ grows toward the idiosyncratic floor
 $(1 - f)\sigma_{\gen,i}^2$, the market-driven component carries an
 increasing share of the marginal, and that component is only as
@@ -103,15 +103,15 @@ $g_i(t) = \alpha_i + \sum_{k=0}^K \beta_{i,k}\, g_m(t - k) + \eps_i(t)$;
 the variance correction generalizes to that form by replacing
 $\beta_i^2 \sigma_m^2$ with the variance of the full market-factor
 component, though the empirical value of the extra parameters is
-beyond the scope here. Two further extensions follow naturally:
-multi-factor SIM replaces the single market factor with $K$ factors,
-requiring $\rho_i$ to become the sum of factor contributions and the
-loading vector to be clipped rather than a scalar (the branch logic
-is unchanged), and per-ticker tuning of the JumpHMM jump parameters
-$(\epsilon, \lambda)$ tightens each marginal's fit (we used defaults
-to keep fitting tractable across the universe, but tuning as reported
-in the companion paper~\cite{alswaidanVarner2026jdiq} would push the
-hybrid KS pass rates upward). A
+beyond the scope here. Two further extensions follow naturally. Multi-factor SIM replaces
+the single market factor with $K$ factors, requiring $\rho_i$ to
+become the sum of factor contributions and the loading vector to be
+clipped rather than a scalar, though the branch logic is unchanged.
+Per-ticker tuning of the JumpHMM jump parameters $(\epsilon, \lambda)$
+tightens each marginal's fit; we used defaults to keep fitting
+tractable across the universe, but tuning as reported in the
+companion paper~\cite{alswaidanVarner2026jdiq} would push the hybrid
+KS pass rates upward. A
 stress-test harness ties these together: using the clipping rule to
 enforce a minimum idiosyncratic share in constructed market scenarios
 guarantees that per-asset marginals remain heavy-tailed even under
