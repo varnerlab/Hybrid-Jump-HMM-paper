@@ -56,11 +56,18 @@ structure on top of per-ticker draws built against sampled market
 paths, with the variance correction of Eq.~\eqref{eq:scale} still
 providing the per-asset variance target on each realized
 $g_m^{(r)}$. A separate scope boundary concerns the downstream use
-case: the metrics reported here characterize marginal and factor
-fidelity of the composition rule on per-ticker targets, not the
-suitability of composed paths for evaluating portfolio strategies
-that rebalance at high frequency, a setting in which the temporal
-structure of the residual draw becomes load-bearing in a way that
+case: the main metrics reported here characterize marginal and
+factor fidelity of the composition rule on per-ticker targets. To
+test whether that fidelity translates to a consequential downstream
+number, we also report a per-ticker one-day $95\%$ and $99\%$
+Value-at-Risk backtest of the composed paths against the real
+2014--2024 growth-rate histories, with exceedance counts assessed by
+Kupiec's unconditional coverage test; the per-ticker framing keeps
+this validation inside the paper's scope, while portfolio-level VaR
+requires the cross-sectional copula deferred to the companion
+paper~\cite{alswaidanVarner2026jdiq}. High-turnover portfolio
+strategies remain a distinct scope boundary: the temporal structure
+of the residual draw becomes load-bearing in a way that
 contemporaneous composition does not address.
 
 Clipping did not trigger anywhere in the US-equity universe used here,
@@ -119,13 +126,21 @@ diversification return of \cite{boothFama1992}, a compounding
 premium that scales with residual variance and rebalancing frequency
 and is largely absent in real markets, where daily residual
 autocorrelation is small but positive \cite{boucheyGunthorpSutherland2012}.
-Adding temporal dependence to the residual draw (AR(1), GARCH on
-residual variance, or a block-bootstrap from empirical residuals)
-is the natural fix, at the cost of decoupling the per-ticker
-marginal fit from the temporal model; users evaluating
-high-turnover strategies on uncorrected paths should benchmark
+Two generator alternatives in Table~\ref{tab:aggregate} preserve
+temporal structure directly: the block-bootstrap composer resamples
+blocks of the empirical OLS residual series~\cite{politisRomano1994},
+inheriting whatever autocorrelation is present in the data, and the
+GARCH(1,1)-$t$ composer fits a conditional-variance model per
+ticker~\cite{bollerslev1986}. Both recover marginal fidelity at the
+cost of committing the pipeline to a specific residual generator,
+whereas the variance correction of Eq.~\eqref{eq:scale} is
+generator-agnostic and accepts a full-return JumpHMM marginal (with
+its jump and regime structure) as input. Users evaluating
+high-turnover strategies on JumpHMM-corrected paths should benchmark
 absolute return levels against a static-allocation baseline on the
-same paths. Two further extensions follow naturally. Multi-factor SIM replaces
+same paths, or adopt the bootstrap or GARCH alternatives when
+residual autocorrelation is the load-bearing structure for the
+downstream task. Two further extensions follow naturally. Multi-factor SIM replaces
 the single market factor with $K$ factors, requiring $\rho_i$ to
 become the sum of factor contributions and the loading vector to be
 clipped rather than a scalar, though the branch logic is unchanged.

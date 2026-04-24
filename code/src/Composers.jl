@@ -10,13 +10,16 @@
 
 Per-ticker tag identifying which branch of the hybrid construction was used.
 
-* `HYBRID`         — variance-corrected, no clipping (`ρ ≤ 1 - f`)
-* `HYBRID_CLIPPED` — variance-corrected with `β` clipped to the floor
-* `R2_PRESERVE`    — `R²`-preserving branch (tracker assets)
-* `NAIVE`          — naive composition baseline
-* `GAUSSIAN_SIM`   — Gaussian-residual SIM baseline
+* `HYBRID`           — variance-corrected, no clipping (`ρ ≤ 1 - f`)
+* `HYBRID_CLIPPED`   — variance-corrected with `β` clipped to the floor
+* `R2_PRESERVE`      — `R²`-preserving branch (tracker assets)
+* `NAIVE`            — naive composition baseline
+* `GAUSSIAN_SIM`     — Gaussian-residual SIM baseline
+* `RESIDUAL_JUMPHMM` — JumpHMM fit to OLS residuals (not full returns), composed with `s=1`
+* `BLOCK_BOOTSTRAP`  — Politis–Romano stationary bootstrap of real OLS residuals
+* `GARCH_T`          — per-ticker GARCH(1,1)-t fit to OLS residuals
 """
-@enum ConstructionFlag HYBRID HYBRID_CLIPPED R2_PRESERVE NAIVE GAUSSIAN_SIM
+@enum ConstructionFlag HYBRID HYBRID_CLIPPED R2_PRESERVE NAIVE GAUSSIAN_SIM RESIDUAL_JUMPHMM BLOCK_BOOTSTRAP GARCH_T
 
 """
     compose_naive(α, β, gm, ε̃) → g
@@ -96,6 +99,74 @@ function compose_hybrid(α::Float64, β::Float64, R²_real::Float64,
 
     g = α .+ β_eff .* gm .+ ε
     return g, β_eff, flag
+end
+
+"""
+    compose_residual_jumphmm(α, β, gm, ε̃_resid) → g
+
+Alternative composition baseline: the per-asset generator is fit to the OLS
+residual series `e_i(t) = r_i(t) - α_i - β_i r_m(t)` rather than to the full
+return series. A draw `ε̃_resid` from that residual-fit generator is already
+idiosyncratic by construction, so composition proceeds without variance
+correction: `g = α + β · gm + ε̃_resid`.
+
+Functionally identical to `compose_naive`; the distinction is upstream (where
+the generator was fit). We keep it as a separate entry point so the caller's
+intent and the construction flag are unambiguous in the output scoreboard.
+"""
+function compose_residual_jumphmm(α::Float64, β::Float64,
+                                   gm::AbstractVector{<:Real},
+                                   ε̃_resid::AbstractVector{<:Real})
+    return α .+ β .* gm .+ ε̃_resid
+end
+
+"""
+    compose_block_bootstrap(α, β, gm, residuals_real, block_length, rng) → g
+
+Politis–Romano stationary bootstrap composition baseline. Draws a bootstrap
+replicate of length `length(gm)` from the real OLS residual series
+`residuals_real`, using random block lengths with mean `block_length`, then
+composes `g = α + β · gm + ε̂` with no variance correction. Preserves any
+serial correlation present in the real residuals up to the block scale.
+"""
+function compose_block_bootstrap(α::Float64, β::Float64,
+                                  gm::AbstractVector{<:Real},
+                                  residuals_real::AbstractVector{<:Real},
+                                  block_length::Real,
+                                  rng::AbstractRNG)
+    T = length(gm)
+    n = length(residuals_real)
+    @assert n > 0 "residual series must be non-empty"
+    @assert block_length > 0 "mean block length must be positive"
+    p = 1.0 / block_length
+    ε̂ = Vector{Float64}(undef, T)
+    idx = rand(rng, 1:n)
+    for t in 1:T
+        if t > 1 && rand(rng) < p
+            idx = rand(rng, 1:n)
+        end
+        ε̂[t] = residuals_real[idx]
+        idx = idx == n ? 1 : idx + 1
+    end
+    return α .+ β .* gm .+ ε̂
+end
+
+"""
+    compose_garch_t(α, β, gm, ε̃_garch) → g
+
+GARCH(1,1)-t composition baseline. The innovation `ε̃_garch` is assumed to be
+a simulated path from a per-ticker GARCH(1,1) with Student-t standardized
+innovations, fit to the real OLS residual series. Composes with no variance
+correction: `g = α + β · gm + ε̃_garch`.
+
+Fitting is performed externally (see `scripts/01c-Fit-GARCH.jl`) against
+`ARCHModels.jl`; this function only consumes the sampled innovations so that
+`Composers.jl` remains free of third-party dependencies.
+"""
+function compose_garch_t(α::Float64, β::Float64,
+                          gm::AbstractVector{<:Real},
+                          ε̃_garch::AbstractVector{<:Real})
+    return α .+ β .* gm .+ ε̃_garch
 end
 
 """

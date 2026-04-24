@@ -242,9 +242,8 @@ Section~\ref{sec:method-variance} with clipping
 (Section~\ref{sec:method-clipping}) engaged when the market loading
 ratio $\rho_i$ would otherwise exceed $1 - f$. Each asset is tagged
 with a construction flag $\texttt{r2-preserve}$, $\texttt{hybrid}$,
-$\texttt{hybrid-clipped}$, or $\texttt{fallback}$ that is persisted
-alongside the output, so downstream consumers can audit which path
-each asset took. The optional rank reorder in line~14 accepts any
+or $\texttt{hybrid-clipped}$ that is persisted alongside the output,
+so downstream consumers can audit which path each asset took. The optional rank reorder in line~14 accepts any
 joint dependence structure (empirical copula, t-copula, factor
 copula); reordering preserves the marginal variance of $\eps_i$, so
 the variance algebra of Section~\ref{sec:method-variance} is
@@ -309,4 +308,10 @@ low-$\beta$ assets and noticeably at high $\beta$. The construction
 injects \emph{contemporaneous} market dependence only; lagged
 dependence (lead-lag effects, market-driven volatility clustering)
 requires a richer construction, which we return to in
-Section~\ref{sec:discussion}.
+Section~\ref{sec:discussion}. The pipeline is modest in compute:
+fitting the $423$ per-asset JumpHMM marginals runs once offline
+against the $2014$--$2024$ price histories; the scoring loop across
+$423 \times 100 = 42{,}300$ per-ticker replications per composer
+runs in minutes on a commodity laptop, and the full six-composer
+sweep reported in Section~\ref{sec:results} completes within an
+hour on the same hardware.

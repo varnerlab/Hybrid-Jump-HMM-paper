@@ -66,8 +66,11 @@ deviations $|\hat\beta - \beta|$ and $|\hat R^2 - R^2_{\real}|$;
 marginal fidelity was assessed by Kolmogorov--Smirnov (KS) and
 Anderson--Darling (AD) two-sample $p$-values against the real
 marginal, Wasserstein-$1$ distance $W_1$, excess kurtosis $\kappa$,
-and the Hill tail-index estimator on the upper $5\%$ of
-$|g_i^{(r)}|$; variance preservation was the ratio
+and the classical Hill tail-index estimator
+$\hat\xi = (k-1)^{-1}\sum_{i=1}^{k-1}\log(X_{(i)}/X_{(k)})$ on the
+upper $5\%$ order statistics of $|g_i^{(r)}|$, so reported Hill values
+are tail indices with $\hat\xi \approx 1/\alpha$ for a Pareto-tailed
+distribution with shape $\alpha$; variance preservation was the ratio
 $\mathrm{Var}(g_i^{(r)}) / \sigma_{\gen,i}^2$, using the real-data
 variance as a proxy for the generator's targeted variance. Pass rates
 were reported at $\alpha = 0.05$, and we reported $R = 100$

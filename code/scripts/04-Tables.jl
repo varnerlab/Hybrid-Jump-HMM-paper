@@ -30,8 +30,20 @@ r.r2_cal   = [cmap[t][2] for t in r.ticker]
 r.dβ       = abs.(r.β_hat .- r.beta_cal)
 r.dR²      = abs.(r.R²_hat .- r.r2_cal)
 
-composer_order   = ["naive", "gaussian", "hybrid"]
-composer_display = Dict("naive" => "Naive", "gaussian" => "Gaussian SIM", "hybrid" => "Hybrid")
+composer_order_full = ["naive", "gaussian", "hybrid",
+                        "residual_jumphmm", "block_bootstrap", "garch_t"]
+composer_display    = Dict("naive"            => "Naive",
+                            "gaussian"         => "Gaussian SIM",
+                            "hybrid"           => "Hybrid",
+                            "residual_jumphmm" => "JumpHMM-on-residuals",
+                            "block_bootstrap"  => "Block bootstrap",
+                            "garch_t"          => "GARCH(1,1)-\$t\$")
+
+# Drop any composers not present in this results DataFrame, so the script
+# runs cleanly whether or not 01b / 01c have been executed.
+present = Set(unique(r.composer))
+composer_order = [c for c in composer_order_full if c in present]
+@info "Composers in results" all = composer_order_full present = composer_order
 
 # ── helpers for LaTeX output ────────────────────────────────────────────────
 fmt3(x) = @sprintf("%.3f", x)

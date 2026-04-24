@@ -22,6 +22,20 @@ idiosyncratic_floor   = 0.10
 [simulation]
 n_paths           = 100           # pilot run; bump to 1000 once headline numbers look right
 seed              = 1234
+# Seed list for uncertainty quantification (Workstream C1). Leave as a single
+# entry to reproduce the original single-seed numbers.
+seed_list         = [1234, 2345, 3456, 4567, 5678, 6789, 7890, 8910]
+
+[bootstrap]
+# Politis–Romano stationary bootstrap mean block length for the
+# compose_block_bootstrap baseline. sqrt(T) ≈ 50 for T = 2766.
+mean_block_length = 50
+
+[stress]
+# Market-variance scale factors for the clipping stress test (Workstream C3).
+# factor = 1.0 reproduces the real SPY path; 2.0 and 3.0 trigger clipping on
+# high-β tickers whose idiosyncratic floor (1 - f = 0.90) is exceeded.
+factors = [1.0, 2.0, 3.0]
 
 [paths]
 # Optional override: where to find the cached JumpHMM market model and per-ticker
