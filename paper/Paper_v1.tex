@@ -21,6 +21,7 @@
 \usepackage{algorithmic}
 \usepackage{bm}
 \usepackage{multirow}
+\usepackage{lineno}
 
 % --- figure/table placement ---
 \setcounter{topnumber}{1}
@@ -60,11 +61,17 @@
 
 \begin{document}
 
+% Uncomment for journal submission; keep commented for arXiv.
+% \linenumbers
+
 \maketitle
 
 \begin{abstract}
 \input{sections/abstract}
 \end{abstract}
+
+\vspace{0.5em}
+\noindent\textbf{Keywords:} single-index model; synthetic return generation; hidden Markov models; heavy-tailed marginals; variance correction; factor composition.
 
 \section{Introduction}\label{sec:introduction}
 \input{sections/introduction}

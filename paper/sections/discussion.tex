@@ -22,7 +22,7 @@ in every ticker, and preserved the generator's tails at a level
 indistinguishable from the naive composition. The gap was large
 enough to matter in practice: at the high-$\beta$ end of the
 universe, naive composition inflated the marginal variance by over
-$70\%$ relative to the generator target. Because branch selection is
+$70\%$ relative to the generator target (Fig.~\ref{fig:preservation}). Because branch selection is
 driven entirely by the calibrated $R^2$ and each asset carries a
 persisted construction flag, the procedure runs uniformly across an
 arbitrary ticker universe without external metadata and leaves an
@@ -55,7 +55,13 @@ a reorder-plus-simulated-market pipeline would layer cross-sectional
 structure on top of per-ticker draws built against sampled market
 paths, with the variance correction of Eq.~\eqref{eq:scale} still
 providing the per-asset variance target on each realized
-$g_m^{(r)}$.
+$g_m^{(r)}$. A separate scope boundary concerns the downstream use
+case: the metrics reported here characterize marginal and factor
+fidelity of the composition rule on per-ticker targets, not the
+suitability of composed paths for evaluating portfolio strategies
+that rebalance at high frequency, a setting in which the temporal
+structure of the residual draw becomes load-bearing in a way that
+contemporaneous composition does not address.
 
 Clipping did not trigger anywhere in the US-equity universe used here,
 because the JumpHMM marginals carried enough variance that
@@ -103,7 +109,23 @@ $g_i(t) = \alpha_i + \sum_{k=0}^K \beta_{i,k}\, g_m(t - k) + \eps_i(t)$;
 the variance correction generalizes to that form by replacing
 $\beta_i^2 \sigma_m^2$ with the variance of the full market-factor
 component, though the empirical value of the extra parameters is
-beyond the scope here. Two further extensions follow naturally. Multi-factor SIM replaces
+beyond the scope here. Lagged idiosyncratic dependence is likewise
+absent: the JumpHMM residuals $\teps_i$ are drawn independently
+across time, so any residual autocorrelation present in the real
+data is discarded by the composition. This matters most for
+workflows that evaluate portfolios rebalancing at high frequency.
+With iid residuals, a rebalancing rule collects the full
+diversification return of \cite{boothFama1992}, a compounding
+premium that scales with residual variance and rebalancing frequency
+and is largely absent in real markets, where daily residual
+autocorrelation is small but positive \cite{boucheyGunthorpSutherland2012}.
+Adding temporal dependence to the residual draw (AR(1), GARCH on
+residual variance, or a block-bootstrap from empirical residuals)
+is the natural fix, at the cost of decoupling the per-ticker
+marginal fit from the temporal model; users evaluating
+high-turnover strategies on uncorrected paths should benchmark
+absolute return levels against a static-allocation baseline on the
+same paths. Two further extensions follow naturally. Multi-factor SIM replaces
 the single market factor with $K$ factors, requiring $\rho_i$ to
 become the sum of factor contributions and the loading vector to be
 clipped rather than a scalar, though the branch logic is unchanged.
