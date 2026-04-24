@@ -70,17 +70,17 @@ if isfile(results_file)
         :kurt    => median => :kurt_med,
         :w1      => median => :w1_med,
     )
-    sort!(agg, [:composer => c -> findfirst(==(c), composer_order)])
+    agg = agg[sortperm([findfirst(==(c), composer_order) for c in agg.composer]), :]
 
     # KS pass rate bars
     labels = [composer_label[c] for c in agg.composer]
     colors = [composer_color[c] for c in agg.composer]
 
     p4a = bar(labels, agg.ks_pct;
-              ylabel = "KS pass (\\%)", title = "Marginal fidelity", legend = false,
+              ylabel = "KS pass (%)", title = "Marginal fidelity", legend = false,
               color = colors, ylims = (0, 110), xrotation = 15, fillalpha = 0.85)
     p4b = bar(labels, agg.hill_med;
-              ylabel = "Hill (upper 5\\% tail)", title = "Tail index",
+              ylabel = "Hill (upper 5% tail)", title = "Tail index",
               legend = false, color = colors, xrotation = 15, fillalpha = 0.85)
 
     fig4 = plot(p4a, p4b; layout = (1, 2), size = (1200, 460),
@@ -107,8 +107,8 @@ if have_sensitivity
     p5 = heatmap(string.(R²_grid), string.(f_grid), KS;
                  xlabel = "\$R^2_{\\mathrm{preserve}}\$",
                  ylabel = "idiosyncratic floor \$f\$",
-                 title = "Hybrid KS pass rate (\\%)",
-                 color = :viridis, colorbar_title = "KS pass (\\%)",
+                 title = "Hybrid KS pass rate (%)",
+                 color = :viridis, colorbar_title = "KS pass (%)",
                  size = (640, 480), left_margin = 6Plots.mm)
     savefig(p5, joinpath(_PATH_TO_PFIGS, "fig5_sensitivity.pdf"))
     @info "Wrote fig5_sensitivity.pdf"
@@ -131,13 +131,13 @@ if isfile(stress_file)
 
     p6a = plot(agg_s.factor, agg_s.ks_pct;
                xlabel = "market-variance scale factor",
-               ylabel = "Hybrid KS pass (\\%)",
+               ylabel = "Hybrid KS pass (%)",
                title = "Marginal fidelity under stress",
                lw = 2.5, color = OI_VERMILLION, marker = :circle, legend = false,
                ylims = (0, 110))
     p6b = plot(agg_s.factor, agg_s.clip_pct;
                xlabel = "market-variance scale factor",
-               ylabel = "tickers clipped (\\%)",
+               ylabel = "tickers clipped (%)",
                title = "Clipping incidence",
                lw = 2.5, color = OI_YELLOW, marker = :diamond, legend = false)
 
@@ -186,18 +186,18 @@ if isfile(var_file)
 
     # 99% VaR panel
     agg99 = filter(row -> row.alpha_level == 0.99, agg_v)
-    sort!(agg99, [:composer => c -> findfirst(==(c), composer_order)])
+    agg99 = agg99[sortperm([findfirst(==(c), composer_order) for c in agg99.composer]), :]
 
     p8a = bar(labels, agg99.mean_rate * 100;
-              ylabel = "exceedance rate (\\%)",
-              title = "99\\% VaR: mean exceedance", legend = false,
+              ylabel = "exceedance rate (%)",
+              title = "99% VaR: mean exceedance", legend = false,
               color = colors, xrotation = 15, fillalpha = 0.85,
               yerror = agg99.sd_rate * 100)
     hline!(p8a, [1.0]; lw = 2, ls = :dash, color = :black)
 
     p8b = bar(labels, agg99.kupiec_pass;
-              ylabel = "Kupiec pass (\\%)",
-              title = "99\\% VaR: coverage test",
+              ylabel = "Kupiec pass (%)",
+              title = "99% VaR: coverage test",
               legend = false, color = colors, xrotation = 15, fillalpha = 0.85,
               ylims = (0, 110))
 

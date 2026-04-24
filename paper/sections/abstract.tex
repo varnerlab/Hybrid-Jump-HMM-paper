@@ -22,12 +22,23 @@ marginal, with the SPY-on-itself identity recovered as a degenerate
 limit without special-casing. Branch selection was driven entirely by
 the calibrated coefficient of determination, requiring no external
 metadata, and each asset carried a persisted construction flag so
-downstream consumers could audit which path it took. Evaluated on a 424-ticker US equity and exchange-traded fund (ETF)
-universe against the SPY market path using \texttt{JumpHMM.jl}
+downstream consumers could audit which path it took. Evaluated on a $424$-ticker US equity and exchange-traded fund (ETF)
+universe against the SPY market path with \texttt{JumpHMM.jl}
 marginals, the hybrid construction recovered the factor loading to a
 median absolute error of $0.018$ and passed a per-ticker
-Kolmogorov--Smirnov test against the real marginal at rate $50.4\%$,
-compared with $4.5\%$ for the naive composition and $0.6\%$ for the
-Gaussian-residual baseline, preserving the heavy-tailed marginal
-across the full empirical range of factor loadings. All artifacts, scripts, and the fitted marginal cache are
-released with the paper.
+Kolmogorov--Smirnov test against the real marginal at rate $50\%$,
+versus $4\%$ for the naive composition and below $1\%$ for the
+Gaussian-residual baseline. Three alternative generators fit
+directly to OLS residuals (JumpHMM-on-residuals, Politis--Romano
+block bootstrap, and GARCH(1,1)-$t$) achieved higher KS pass rates
+of $67$--$76\%$; on a per-ticker one-day $99\%$ Value-at-Risk
+backtest, hybrid and residual-fit JumpHMM were statistically
+indistinguishable (mean exceedance $0.95\%$ and $0.99\%$ against the
+nominal $1\%$, Kupiec unconditional-coverage pass rates $80\%$ and
+$83\%$). Hybrid is therefore the appropriate choice when the
+per-asset generator is specified in full-return units (as generators
+often are, for distributional interpretability or calibration
+reuse); the residual-fit alternatives are stronger on marginal body
+fidelity when the workflow permits a dedicated residual generator.
+All artifacts, scripts, and the fitted marginal cache are released
+with the paper.

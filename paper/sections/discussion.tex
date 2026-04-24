@@ -5,21 +5,37 @@ In this study, we composed synthetic per-asset growth-rate paths
 under a single-index model (SIM) by drawing each asset's innovation
 from an independent JumpHMM generator fit to the asset's own
 full growth-rate history, then rescaling the draw by a closed-form scalar
-before inserting it into the SIM composition. We evaluated three
+before inserting it into the SIM composition. We evaluated six
 composers on a calibrated universe of $424$ US equities and
 exchange-traded funds against the real SPY market path: the naive
-composition, a Gaussian-residual SIM baseline, and the hybrid
-construction proposed here. The one-line variance correction,
+composition, a Gaussian-residual SIM baseline, the hybrid
+construction proposed here, and three residual-fit alternatives
+(JumpHMM-on-residuals, Politis--Romano block
+bootstrap~\cite{politisRomano1994}, and a per-ticker GARCH(1,1)-$t$
+fit~\cite{bollerslev1986}). The one-line variance correction,
 together with the sign-preserving clip rule and the $R^2$-preserving
 branch, closes a gap between two previously unsatisfying options for
 building synthetic asset paths with both marginal structure and
 factor structure: naive composition gives both but distorts the
 marginal by $\beta^2 \sigma_m^2$, while Gaussian-residual SIM gives
 the factor exactly but strips the marginal. The hybrid construction
-sat between the two: it recovered $\beta$ to the same precision as
-either baseline, held the generator marginal to its target variance
-in every ticker, and preserved the generator's tails at a level
-indistinguishable from the naive composition. The gap was large
+sat between the Gaussian-residual and naive baselines: it recovered
+$\beta$ to the same precision as either, held the generator marginal
+to its target variance in every ticker, and preserved the generator's
+tails at a level indistinguishable from the naive composition. The
+three residual-fit composers produced higher Kolmogorov--Smirnov
+pass rates than hybrid on marginal body fidelity ($67$ to $76\%$
+versus $50\%$), but matched hybrid on the $99\%$ Value-at-Risk
+coverage test to within statistical tolerance
+(Table~\ref{tab:var}); the body-fidelity gap did not translate to a
+tail-accuracy gap. Hybrid's contribution is therefore scoped: it is
+the best composition rule when the per-asset generator is specified
+in full-return units (a common setting, since per-asset generators
+are often calibrated for distributional interpretability, cached for
+other pipelines, or chosen to retain regime-switching or jump
+structure), and it delivers $99\%$ VaR accuracy on par with a
+dedicated residual generator without requiring a separate fitting
+stage. The gap was large
 enough to matter in practice: at the high-$\beta$ end of the
 universe, naive composition inflated the marginal variance by over
 $70\%$ relative to the generator target (Fig.~\ref{fig:preservation}). Because branch selection is

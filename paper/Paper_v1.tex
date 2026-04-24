@@ -233,6 +233,84 @@ per-asset hidden Markov model generators rely on \texttt{JumpHMM.jl}
   \label{fig:branch_map}
 \end{figure}
 
+% -----------------------------------------------------------------------
+% Table 5: VaR backtest
+% -----------------------------------------------------------------------
+\begin{table}[p]
+  \centering
+  \caption{\textbf{Per-ticker one-day Value-at-Risk backtest across the
+    six composers.} For each (ticker, replication) pair we estimate the
+    VaR threshold at coverage level $\alpha$ from the composed path and
+    count exceedances against the real $2014$--$2024$ growth-rate
+    history. \textit{rate}: mean exceedance rate across tickers
+    (nominal: $1-\alpha$). \textit{Kupiec pass}: fraction of tickers on
+    which the Kupiec unconditional-coverage test $p$-value exceeds
+    $0.05$. Hybrid and JumpHMM-on-residuals are statistically
+    indistinguishable at both coverage levels; both strawman composers
+    (naive, Gaussian SIM) fail coverage on a majority of the universe.}
+  \label{tab:var}
+  \small
+  \input{sections/tables/table5_var_backtest}
+\end{table}
+
+% -----------------------------------------------------------------------
+% Figure 4: Six-composer baseline panel
+% -----------------------------------------------------------------------
+\begin{figure}[p]
+  \centering
+  \includegraphics[width=\textwidth]{figs/fig4_baseline_panel.pdf}
+  \caption{\textbf{Six-composer comparison on aggregate marginal fidelity
+    and tail index.} \emph{Left:} per-ticker Kolmogorov--Smirnov pass
+    rate at $\alpha = 0.05$, aggregated across $423$ tickers and $100$
+    replications per ticker. The three residual-fit composers
+    (JumpHMM-on-residuals, block bootstrap, GARCH(1,1)-$t$) dominate the
+    hybrid on marginal body fidelity; both strawman composers collapse.
+    \emph{Right:} median Hill tail index on the upper $5\%$ of $|g|$.
+    Hybrid, JumpHMM-on-residuals, and naive cluster at $\sim 0.37$,
+    reflecting the shared full-return JumpHMM generator's tail
+    character; block bootstrap and GARCH sit slightly lower at
+    $0.33$--$0.32$; Gaussian SIM collapses to $0.22$.}
+  \label{fig:baseline}
+\end{figure}
+
+% -----------------------------------------------------------------------
+% Figure 7: R^2 distribution across the universe
+% -----------------------------------------------------------------------
+\begin{figure}[p]
+  \centering
+  \includegraphics[width=0.85\textwidth]{figs/fig7_r2_distribution.pdf}
+  \caption{\textbf{Calibrated $R^2$ distribution across the $423$
+    non-SPY tickers.} Histogram of OLS $R^2$ against SPY over the
+    $2014$--$2024$ window. The two tickers crossing the
+    $R^2_{\mathrm{preserve}} = 0.80$ threshold (dashed line) are index
+    ETFs (QQQ, SPYG); the highest-$R^2$ individual stock (BLK, $0.645$)
+    sits a structural $\sim 0.22$ below the threshold. The
+    \texttt{r2-preserve} branch's $n = 2$ occupancy is therefore a
+    property of the single-factor SIM on S\&P 500 names against SPY,
+    not a sample-size artifact or a data-peeked threshold.}
+  \label{fig:r2_distribution}
+\end{figure}
+
+% -----------------------------------------------------------------------
+% Figure 8: VaR exceedance and Kupiec coverage at 99%
+% -----------------------------------------------------------------------
+\begin{figure}[p]
+  \centering
+  \includegraphics[width=\textwidth]{figs/fig8_var_backtest.pdf}
+  \caption{\textbf{$99\%$ Value-at-Risk exceedance rates and Kupiec
+    coverage across the six composers.} \emph{Left:} mean exceedance
+    rate across tickers (nominal $1\%$, dashed line); error bars are
+    one SD across tickers. Hybrid, JumpHMM-on-residuals, block
+    bootstrap, and GARCH(1,1)-$t$ all hit coverage within $0.1$pp of
+    nominal; naive under-breaches (inflated variance in the composed
+    marginal) and Gaussian over-breaches (thin tails). \emph{Right:}
+    fraction of tickers on which the Kupiec unconditional-coverage
+    test $p$-value exceeds $0.05$. Hybrid and JumpHMM-on-residuals are
+    statistically indistinguishable ($80$ and $83\%$); the strawman
+    composers fail on the majority of the universe.}
+  \label{fig:var}
+\end{figure}
+
 % --- SI Appendix (no supplemental material at this stage) ---
 
 \end{document}

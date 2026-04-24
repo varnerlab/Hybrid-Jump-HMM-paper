@@ -104,22 +104,37 @@ marginal-versus-factor tradeoff.
 In this study, we tested the construction on the $424$-ticker US
 equity universe and SPY market path used by the companion
 \texttt{JumpHMM.jl} validation paper of Alswaidan and
-Varner~\cite{alswaidanVarner2026jdiq}, comparing three composition
+Varner~\cite{alswaidanVarner2026jdiq}, comparing six composition
 recipes on the same generators and the same market path: the naive
 composition, a Gaussian-residual SIM that recovers the calibrated
-factor coefficients and $R^2$ but loses the marginal structure, and the
-hybrid construction proposed here. We measured SIM
-recovery, marginal fidelity, and cross-sectional dependence, reporting
-each per construction-flag branch. The hybrid construction held the
-SIM-recovery error of the naive composition while holding the
-marginal-fidelity error of the Gaussian-residual baseline across the
-full range of empirical factor loadings; on the aggregate scorecard
-it recovered the factor loading to a median absolute error of $0.018$ and passed a
-per-ticker Kolmogorov--Smirnov test against the real marginal at rate
-$50.4\%$, compared to $4.5\%$ for the naive composition and $0.6\%$
-for the Gaussian baseline. The broader implication is that the
-marginal-versus-factor tradeoff long assumed in SIM composition is not
-fundamental: a single closed-form scalar correction closes the gap,
-and the correction generalizes to richer factor structures
-(multi-factor SIM, lagged-factor SIM) without changing the underlying
-algebra.
+factor coefficients and $R^2$ but loses the marginal structure, the
+hybrid construction proposed here, a JumpHMM marginal fit directly
+to the OLS residual series (composed with no variance correction),
+a Politis--Romano stationary bootstrap of the real residual
+history~\cite{politisRomano1994}, and a per-ticker GARCH(1,1)-$t$
+fit to residuals~\cite{bollerslev1986}. We measured SIM recovery,
+marginal fidelity, and per-ticker one-day Value-at-Risk accuracy,
+reporting each per construction-flag branch. All six composers
+recovered the factor loading to a median absolute error of $0.018$
+(hybrid, residual-fit, bootstrap, GARCH) or $0.022$ (naive). On
+marginal fidelity the hybrid construction held the Kolmogorov--Smirnov
+pass rate at $50\%$, against $4\%$ for the naive composition and below
+$1\%$ for the Gaussian baseline; the three residual-fit alternatives
+attained pass rates of $67$ to $76\%$. On the $99\%$ Value-at-Risk
+backtest, hybrid and JumpHMM-on-residuals delivered statistically
+indistinguishable coverage (Kupiec pass rates $80\%$ and $83\%$
+respectively); the strawman composers failed coverage at around
+$45\%$. The broader implication is that the
+marginal-versus-factor tradeoff long assumed in SIM composition is
+not fundamental: a single closed-form scalar correction closes it to
+within a few percentage points of a dedicated residual-fit generator
+(JumpHMM-on-residuals, block bootstrap, or GARCH(1,1)-$t$) on
+marginal-body fidelity, and matches the residual-fit generator on a
+one-day $99\%$ Value-at-Risk backtest against the real
+growth-rate histories. The hybrid composition rule trades a small
+body-fidelity gap for generator agnosticism: any per-asset full-return
+marginal, including heavy-tailed HMM-with-jumps or regime-switching
+generators calibrated once for other purposes, can enter the factor
+pipeline unchanged. The correction generalizes to richer factor
+structures (multi-factor SIM, lagged-factor SIM) without changing the
+underlying algebra.

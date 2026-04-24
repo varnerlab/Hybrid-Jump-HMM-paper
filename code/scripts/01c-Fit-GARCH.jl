@@ -62,6 +62,7 @@ Random.seed!(seed)
 
 garch_models = Dict{String,Any}()
 garch_sims   = Dict{String,Vector{Vector{Float64}}}()
+skipped      = NamedTuple[]
 
 for (i, row) in enumerate(eachrow(calib))
     ticker = row.ticker
@@ -76,18 +77,35 @@ for (i, row) in enumerate(eachrow(calib))
     end
 
     # GARCH(1,1) with Student-t standardized innovations, no mean.
-    spec  = GARCH{1,1}
-    dist  = StdT
-    model = fit(spec, e; dist = dist, meanspec = NoIntercept)
+    # `fit` and `simulate` are qualified with `ARCHModels.` because
+    # JumpHMM (imported in Include.jl) also exports both names; without
+    # qualification Julia dispatches to JumpHMM's `fit`, which has no
+    # method for GARCH types. Fits occasionally converge to a
+    # nonstationary region (α+β ≥ 1); ARCHModels refuses to simulate
+    # from those models, so we skip the ticker and record the reason.
+    try
+        model = ARCHModels.fit(GARCH{1,1}, e;
+                               dist = StdT,
+                               meanspec = NoIntercept{Float64})
 
-    # pre-sample n_paths synthetic residual series of length T
-    sims_this = Vector{Vector{Float64}}(undef, n_paths)
-    for r in 1:n_paths
-        sims_this[r] = simulate(model, T).data
+        sims_this = Vector{Vector{Float64}}(undef, n_paths)
+        for r in 1:n_paths
+            sims_this[r] = ARCHModels.simulate(model, T).data
+        end
+
+        garch_models[ticker] = model
+        garch_sims[ticker]   = sims_this
+    catch err
+        reason = sprint(showerror, err)
+        @warn "GARCH skip" ticker=ticker reason=first(reason, 80)
+        push!(skipped, (ticker = ticker, reason = reason))
     end
+end
 
-    garch_models[ticker] = model
-    garch_sims[ticker]   = sims_this
+if !isempty(skipped)
+    skipped_df = DataFrame(skipped)
+    CSV.write(joinpath(_PATH_TO_DATA, "garch-t-skipped.csv"), skipped_df)
+    @info "GARCH skipped tickers" n_skipped = nrow(skipped_df) n_fit = length(garch_sims)
 end
 
 @info "Caching GARCH-t models to $models_cache"

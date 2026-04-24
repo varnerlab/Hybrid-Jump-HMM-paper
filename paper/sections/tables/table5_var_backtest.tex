@@ -1,0 +1,14 @@
+\begin{tabular}{lrrrr}
+\toprule
+ & \multicolumn{2}{c}{$\alpha = 0.95$} & \multicolumn{2}{c}{$\alpha = 0.99$} \\
+\cmidrule(lr){2-3} \cmidrule(lr){4-5}
+Composer & rate (\%) & Kupiec pass (\%) & rate (\%) & Kupiec pass (\%) \\
+\midrule
+Naive                  & 3.55 & 10.4 & 0.67 & 45.2 \\
+Gaussian SIM           & 4.06 & 42.6 & 1.40 & 47.0 \\
+Hybrid                 & 4.75 & 80.4 & 0.95 & 79.7 \\
+JumpHMM-on-residuals   & 4.87 & 84.0 & 0.99 & 82.9 \\
+Block bootstrap        & 4.78 & 76.7 & 1.09 & 86.0 \\
+GARCH(1,1)-$t$         & 4.64 & 69.0 & 1.09 & 72.1 \\
+\bottomrule
+\end{tabular}

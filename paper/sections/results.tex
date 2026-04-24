@@ -32,28 +32,48 @@ yielding the calibrated quadruple
 $(\alpha_i, \beta_i, R^2_{i,\real}, \sigma_{\eps,\real,i})$. The
 universe spanned $\beta \in [0.01, 1.79]$ with median $\beta = 1.00$
 and quartiles $(0.81, 1.00, 1.18)$; $R^2_{i,\real}$ ranged from
-$0.001$ to $0.933$, with only two tickers above the
-$R^2_{\mathrm{preserve}} = 0.80$ threshold (QQQ at $R^2 = 0.861$ and
-SPYG at $R^2 = 0.933$), matching the values cited in
-Section~\ref{sec:introduction}.
+$0.001$ to $0.933$ (Fig.~\ref{fig:r2_distribution}), with only two
+tickers above the $R^2_{\mathrm{preserve}} = 0.80$ threshold (QQQ at
+$R^2 = 0.861$ and SPYG at $R^2 = 0.933$) and the highest-$R^2$
+individual stock (BLK at $R^2 = 0.645$) a structural $\sim 0.22$
+below; the branch assignment is therefore empirically
+tracker-specific on this universe, not a threshold artifact.
 
-The three composition rules shared a \emph{paired innovation}
-protocol: for each non-market ticker and each replication
+The composition rules used a \emph{paired innovation} protocol
+where applicable: for each non-market ticker and each replication
 $r \in \{1, \dots, R\}$ we drew a single innovation path
-$\teps_i^{(r)}$ of length $T$ from the ticker's JumpHMM marginal, and
-the same $\teps_i^{(r)}$ was then passed to all three composers, which
-each composed a synthetic series on top of the real SPY path. The
-composers differed only in their treatment of the innovation. The
-\emph{Naive} composer set
-$g_i^{(r)} = \alpha_i + \beta_i\, g_m + \teps_i^{(r)}$ with no variance
-correction. The \emph{Gaussian SIM} baseline replaced the JumpHMM draw
-with
+$\teps_i^{(r)}$ of length $T$ from the ticker's JumpHMM marginal,
+and the same $\teps_i^{(r)}$ was passed to the naive,
+Gaussian-residual-SIM, and hybrid composers, so that differences
+among those three reflect the composition rule and not generator
+stochasticity. The \emph{Naive} composer set
+$g_i^{(r)} = \alpha_i + \beta_i\, g_m + \teps_i^{(r)}$ with no
+variance correction. The \emph{Gaussian SIM} baseline replaced the
+JumpHMM draw with
 $g_i^{(r)} = \alpha_i + \beta_i\, g_m + \sigma_{\eps,\real,i}\,\xi_i^{(r)}$,
 $\xi_i^{(r)} \sim \mathcal{N}(0, I_T)$ drawn fresh per replication,
 recovering the calibrated $R^2$ exactly but discarding any marginal
 structure carried by $\teps$. The \emph{Hybrid} composer applied
 Algorithm~\ref{alg:hybrid} with floor $f = 0.10$ and threshold
-$R^2_{\mathrm{preserve}} = 0.80$. All three composers skipped the
+$R^2_{\mathrm{preserve}} = 0.80$. We evaluated three further
+composers that draw their innovations from dedicated residual
+generators, each fit to the real OLS residual series
+$e_i(t) = G_i(t) - \alpha_i - \beta_i G_m(t)$. The
+\emph{JumpHMM-on-residuals} composer fits a fresh JumpHMM marginal
+to $e_i$ via a pseudo-price inversion (so the
+\texttt{JumpHMM.jl}~\cite{alswaidanVarner2026jdiq} fit interface
+that expects a price series accepts the residual target without
+modification) and composes
+$g_i^{(r)} = \alpha_i + \beta_i g_m + \teps_{\mathrm{resid},i}^{(r)}$
+with no variance correction. The \emph{Block bootstrap} composer
+draws a Politis--Romano stationary bootstrap
+replicate~\cite{politisRomano1994} of the empirical residual series
+with mean block length $\sqrt{T} \approx 50$ and composes
+analogously. The \emph{GARCH(1,1)-$t$} composer fits a
+conditional-variance model per ticker~\cite{bollerslev1986} and
+substitutes a simulated residual path; $30$ of the $423$ tickers
+yielded a non-stationary GARCH fit ($\alpha + \beta \ge 1$ at the
+optimizer's termination) and were excluded from that composer only. All three composers skipped the
 optional cross-sectional rank reorder in Algorithm~\ref{alg:hybrid} so
 that per-ticker metrics reflected the marginal construction in
 isolation; cross-sectional dependence is studied separately in the
@@ -100,6 +120,43 @@ kurtosis $7.2$, Hill $0.36$; the $R^2$ recovery ($0.021$) came in
 tighter than the naive baseline but looser than the Gaussian
 baseline, reflecting that the variance-preserving branch targeted
 $\sigma_{\gen,i}^2$ rather than $R^2_{i,\real}$.
+
+The three residual-fit composers sidestep the variance-inflation
+problem entirely by fitting a generator directly to $e_i$, which by
+construction has variance $\sigma_{\eps,\real,i}^2$ and no
+double-counted market component. Their aggregate KS pass rates were
+$75.8\%$ (JumpHMM-on-residuals), $73.3\%$ (block bootstrap), and
+$66.9\%$ (GARCH(1,1)-$t$), each higher than hybrid's $50.4\%$
+(Table~\ref{tab:aggregate}, Fig.~\ref{fig:baseline}). The advantage
+sat in the body of the distribution rather than the tails: hybrid's
+median excess kurtosis ($7.17$) and Hill upper-tail index ($0.365$)
+matched JumpHMM-on-residuals ($7.26$ and $0.365$) to within
+sampling variability, confirming that the variance correction of
+Eq.~\eqref{eq:scale} preserves the heavy-tailed character of the
+full-return generator even when the rescaling is applied. Block
+bootstrap and GARCH, by fitting their own residual generators,
+reproduced the empirical residual series but with slightly lighter
+tails ($\kappa = 6.68$ and $6.04$; Hill $0.330$ and $0.318$) than
+either JumpHMM-based recipe.
+
+The downstream consequence of the body-fidelity gap was the
+question a per-ticker one-day Value-at-Risk backtest was designed to
+answer (Table~\ref{tab:var}, Fig.~\ref{fig:var}). At $\alpha = 0.99$
+the nominal exceedance rate is $1\%$; the naive composer
+under-breached at $0.67\%$ and the Gaussian baseline over-breached
+at $1.40\%$, both failing Kupiec unconditional coverage on the
+majority of the universe ($45$ and $47\%$ pass rates). The hybrid,
+JumpHMM-on-residuals, block bootstrap, and GARCH(1,1)-$t$ composers
+all hit coverage within one-tenth of a percentage point of nominal
+($0.95$, $0.99$, $1.09$, and $1.09\%$ respectively), and their
+Kupiec pass rates clustered between $72$ and $86\%$. Hybrid and
+JumpHMM-on-residuals were statistically indistinguishable on this
+test: the $25$pp body-fidelity gap between them did not translate to
+a Value-at-Risk accuracy difference. Hybrid's standalone advantage
+is therefore scoped: it is the right rule when a full-return
+per-asset generator is the given input, and it delivers tail
+accuracy on par with a dedicated residual generator without
+requiring a separate fitting stage.
 
 To see where the KS advantage over the naive baseline came from, we
 next plotted per-ticker KS pass rate and per-ticker marginal variance
