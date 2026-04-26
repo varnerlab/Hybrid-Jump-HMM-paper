@@ -57,10 +57,11 @@ is carried entirely by $\alpha_i$.
 We assume $\Cov[\teps_i, g_m] \approx 0$ for each $i$, which holds
 when the generator and market path are independent draws (the typical
 use case), and holds after a copula rank reorder when the copula is
-sampled independently of $g_m$. If the generator already carries
-non-trivial market correlation, the residual covariance can be
-subtracted from $\beta_i$ before applying the correction; we return to
-this in Section~\ref{sec:discussion}.
+sampled independently of $g_m$ (verified empirically across the
+$423$-ticker universe in Fig.~\ref{fig:cov_diag}). If the generator
+already carries non-trivial market correlation, the residual
+covariance can be subtracted from $\beta_i$ before applying the
+correction; we return to this in Section~\ref{sec:discussion}.
 
 For each asset we are given a calibrated triple
 $(\alpha_i, \beta_i, R^2_{i,\real})$, estimated by ordinary least
