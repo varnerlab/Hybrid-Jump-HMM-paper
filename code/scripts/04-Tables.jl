@@ -171,4 +171,71 @@ open(joinpath(_PATH_TO_TABLES, "table3_by_beta_bucket.tex"), "w") do io
 end
 @info "Wrote paper/sections/tables/table3_by_beta_bucket.tex"
 
+# ── 5. Table 4: seed-uncertainty summary (only if per-seed files exist) ─────
+seed_files = filter(f -> occursin(r"^results-seed-\d+\.jld2$", f),
+                     readdir(_PATH_TO_DATA))
+function aggregate_seeds(seed_files, _data_dir, cmap)
+    rows = DataFrame()
+    for f in seed_files
+        seed_id = parse(Int, match(r"results-seed-(\d+)\.jld2", f).captures[1])
+        rs = load(joinpath(_data_dir, f))["results"]
+        rs.beta_cal = [cmap[t][1] for t in rs.ticker]
+        rs.r2_cal   = [cmap[t][2] for t in rs.ticker]
+        rs.dβ       = abs.(rs.β_hat .- rs.beta_cal)
+        rs.dR²      = abs.(rs.R²_hat .- rs.r2_cal)
+        ag = combine(groupby(rs, :composer),
+            :dβ      => median => :dβ,
+            :dR²     => median => :dR²,
+            :ks_p    => (p -> 100 * mean(p .> 0.05)) => :ks_pct,
+            :ad_p    => (p -> 100 * mean(p .> 0.05)) => :ad_pct,
+            :hill_up => median => :hill,
+            :kurt    => median => :kurt,
+        )
+        ag.seed = fill(seed_id, nrow(ag))
+        rows = vcat(rows, ag)
+    end
+    return rows
+end
+
+if length(seed_files) ≥ 2
+    @info "Seed-uncertainty pass" n_seeds = length(seed_files)
+    per_seed = aggregate_seeds(seed_files, _PATH_TO_DATA, cmap)
+
+    seed_summary = combine(groupby(per_seed, :composer),
+        :ks_pct => mean => :ks_mean,  :ks_pct => std => :ks_sd,
+        :ad_pct => mean => :ad_mean,  :ad_pct => std => :ad_sd,
+        :dβ     => mean => :dβ_mean,  :dβ     => std => :dβ_sd,
+        :dR²    => mean => :dR_mean,  :dR²    => std => :dR_sd,
+        :hill   => mean => :hill_mean, :hill  => std => :hill_sd,
+        :kurt   => mean => :kurt_mean, :kurt  => std => :kurt_sd,
+    )
+    seed_summary = seed_summary[[findfirst(==(c), seed_summary.composer)
+                                  for c in composer_order], :]
+
+    println("\n=== Table 4: Seed-uncertainty summary (mean ± SD across $(length(seed_files)) seeds) ===")
+    show(seed_summary, allcols = true, allrows = true); println()
+
+    pm(m, s) = @sprintf("%.2f \\pm %.2f", m, s)
+    pm3(m, s) = @sprintf("%.3f \\pm %.3f", m, s)
+
+    header4 = ["Composer", "\$|\\hat\\beta-\\beta|\$", "\$|\\hat R^2 - R^2_{\\real}|\$",
+               "KS pass (\\%)", "AD pass (\\%)", "\$\\kappa\$", "Hill"]
+    rows4 = [
+        [composer_display[seed_summary.composer[i]],
+         "\$" * pm3(seed_summary.dβ_mean[i],   seed_summary.dβ_sd[i])   * "\$",
+         "\$" * pm3(seed_summary.dR_mean[i],   seed_summary.dR_sd[i])   * "\$",
+         "\$" * pm(seed_summary.ks_mean[i],    seed_summary.ks_sd[i])   * "\$",
+         "\$" * pm(seed_summary.ad_mean[i],    seed_summary.ad_sd[i])   * "\$",
+         "\$" * pm3(seed_summary.kurt_mean[i], seed_summary.kurt_sd[i]) * "\$",
+         "\$" * pm3(seed_summary.hill_mean[i], seed_summary.hill_sd[i]) * "\$"]
+        for i in 1:nrow(seed_summary)
+    ]
+    open(joinpath(_PATH_TO_TABLES, "table4_seed_uncertainty.tex"), "w") do io
+        latex_table(io, header4, rows4)
+    end
+    @info "Wrote paper/sections/tables/table4_seed_uncertainty.tex"
+else
+    @info "Per-seed files not found — skipping Table 4."
+end
+
 @info "All tables written to $_PATH_TO_TABLES"

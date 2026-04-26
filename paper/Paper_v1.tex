@@ -166,6 +166,22 @@ per-asset hidden Markov model generators rely on \texttt{JumpHMM.jl}
   \input{sections/tables/table3_by_beta_bucket}
 \end{table}
 
+\begin{table}[p]
+  \centering
+  \caption{\textbf{Seed-uncertainty summary across $8$ random seeds.}
+    Each cell reports mean $\pm$ SD across the $8$ seeds in
+    $\{1234, 2345, 3456, 4567, 5678, 6789, 7890, 8910\}$, with each
+    seed running the full $423$-ticker $\times\, 100$-replication
+    protocol. Conditional-variance paths for GARCH(1,1)-$t$ are
+    re-simulated at scoring time so its seed SD is informative. The
+    between-composer differences in KS pass rate exceed the
+    seed-induced SD by roughly two orders of magnitude (hybrid SD
+    $0.18$ pp vs $25$ pp gap to JumpHMM-on-residuals).}
+  \label{tab:seed_uncertainty}
+  \small
+  \input{sections/tables/table4_seed_uncertainty}
+\end{table}
+
 % -----------------------------------------------------------------------
 % Figure 1: Preservation headline
 % -----------------------------------------------------------------------
@@ -274,6 +290,47 @@ per-asset hidden Markov model generators rely on \texttt{JumpHMM.jl}
 \end{figure}
 
 % -----------------------------------------------------------------------
+% Figure 6: Clipping-branch stress test
+% -----------------------------------------------------------------------
+\begin{figure}[p]
+  \centering
+  \includegraphics[width=\textwidth]{figs/fig6_stress.pdf}
+  \caption{\textbf{Clipping-branch behavior under market-variance
+    stress.} Hybrid composer re-run with the SPY growth-rate path
+    rescaled by $\gamma \in \{1, 2, 3\}$, holding the calibrated
+    marginals fixed. \emph{Left:} hybrid KS pass rate at $\alpha = 0.05$
+    rises from the baseline $50.3\%$ at $\gamma = 1$ to $71.8\%$ and
+    $77.3\%$ at $\gamma = 2$ and $\gamma = 3$, because the clipping
+    branch rescales $\beta^{\eff}$ to hold the idiosyncratic floor and
+    prevents the market component from crowding out the generator's
+    marginal. \emph{Right:} fraction of tickers for which the clipping
+    branch activated ($\rho_i > 1 - f = 0.90$). No ticker triggered
+    clipping in the main run; doubling $\sigma_m$ pushed $76\%$ of the
+    universe past the threshold, and $3\times$ pushed $95\%$. The
+    branch is a robustness mechanism, not a degradation mode.}
+  \label{fig:stress}
+\end{figure}
+
+% -----------------------------------------------------------------------
+% Figure 5: Hyperparameter sensitivity heatmap
+% -----------------------------------------------------------------------
+\begin{figure}[p]
+  \centering
+  \includegraphics[width=0.85\textwidth]{figs/fig5_sensitivity.pdf}
+  \caption{\textbf{Hybrid KS pass rate across a $5 \times 5$
+    hyperparameter grid.} Columns index the $R^2$-preserve threshold
+    $R^2_{\mathrm{preserve}} \in \{0.70, 0.75, 0.80, 0.85, 0.90\}$;
+    rows index the idiosyncratic floor $f \in \{0.05, 0.10, 0.15,
+    0.20, 0.30\}$. Hybrid KS pass rate varies from $50.24\%$ to
+    $50.38\%$ across the $25$ cells, a spread of $0.14$ percentage
+    points. The operating point $(0.80, 0.10)$ used throughout the
+    paper is indistinguishable from every other grid point within
+    sampling noise, indicating that the headline result is not a
+    data-peeked local optimum.}
+  \label{fig:sensitivity}
+\end{figure}
+
+% -----------------------------------------------------------------------
 % Figure 7: R^2 distribution across the universe
 % -----------------------------------------------------------------------
 \begin{figure}[p]
@@ -289,6 +346,30 @@ per-asset hidden Markov model generators rely on \texttt{JumpHMM.jl}
     property of the single-factor SIM on S\&P 500 names against SPY,
     not a sample-size artifact or a data-peeked threshold.}
   \label{fig:r2_distribution}
+\end{figure}
+
+% -----------------------------------------------------------------------
+% Figure 9: Synthetic-tracker validation of the R^2-preserve branch
+% -----------------------------------------------------------------------
+\begin{figure}[p]
+  \centering
+  \includegraphics[width=\textwidth]{figs/fig9_synth_tracker.pdf}
+  \caption{\textbf{$R^2$-preserve branch validated on synthetic
+    trackers.} For each $(\beta_{\mathrm{true}}, R^2_{\mathrm{true}})$
+    with $\beta_{\mathrm{true}} \in \{0.8, 1.0, 1.2\}$ and
+    $R^2_{\mathrm{true}} \in \{0.80, 0.85, 0.90, 0.95, 0.99\}$, a
+    synthetic tracker was constructed from
+    $\sigma_{\eps,\mathrm{true}}^2 = \beta_{\mathrm{true}}^2 \sigma_m^2
+    (1 - R^2_{\mathrm{true}}) / R^2_{\mathrm{true}}$ and composed via
+    Algorithm~\ref{alg:hybrid} at $100$ replications.
+    \emph{Left:} recovered $\hat{R}^2$ against target $R^2$, grouped
+    by $\beta_{\mathrm{true}}$; the identity line is dashed.
+    \emph{Right:} recovered $\hat\beta$ against target $R^2$. Across
+    all $15$ cells the branch recovered median $\hat\beta$ to within
+    $0.001$ of $\beta_{\mathrm{true}}$, median $\hat{R}^2$ to within
+    $0.001$ of $R^2_{\mathrm{true}}$, and cleared the $\alpha = 0.05$
+    KS test on at least $99\%$ of replications per cell.}
+  \label{fig:synth_tracker}
 \end{figure}
 
 % -----------------------------------------------------------------------

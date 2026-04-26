@@ -45,6 +45,7 @@ using PrettyTables
 using Printf
 using Random
 using TOML
+import ARCHModels
 
 Random.seed!(1234)
 

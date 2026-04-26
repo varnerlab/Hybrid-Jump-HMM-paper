@@ -192,9 +192,9 @@ function run_composer_experiment(cfg::Dict;
     marginals_resid = ("residual_jumphmm" in include_composers && isfile(residual_cache)) ?
         load(residual_cache)["marginals"] : nothing
 
-    garch_cache = joinpath(_PATH_TO_DATA, "garch-t-sims.jld2")
-    garch_sims = ("garch_t" in include_composers && isfile(garch_cache)) ?
-        load(garch_cache)["sims"] : nothing
+    garch_cache = joinpath(_PATH_TO_DATA, "garch-t-models.jld2")
+    garch_models = ("garch_t" in include_composers && isfile(garch_cache)) ?
+        load(garch_cache)["models"] : nothing
 
     @info "run_composer_experiment" seed=seed f=f R²_threshold=R²_threshold gm_factor=gm_factor composers=collect(include_composers) suffix=output_suffix
 
@@ -258,9 +258,9 @@ function run_composer_experiment(cfg::Dict;
                 record!(ticker, "block_bootstrap", r, β, string(BLOCK_BOOTSTRAP),
                         score_asset(g, G_real, G_m))
             end
-            if "garch_t" in include_composers && garch_sims !== nothing &&
-                    haskey(garch_sims, ticker)
-                ε̃_g = Float64.(garch_sims[ticker][r])
+            if "garch_t" in include_composers && garch_models !== nothing &&
+                    haskey(garch_models, ticker)
+                ε̃_g = Float64.(ARCHModels.simulate(garch_models[ticker], T_eff).data)
                 g = compose_garch_t(α, β, G_m, ε̃_g)
                 record!(ticker, "garch_t", r, β, string(GARCH_T),
                         score_asset(g, G_real, G_m))

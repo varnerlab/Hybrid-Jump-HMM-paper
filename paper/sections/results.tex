@@ -204,7 +204,24 @@ did not trigger anywhere in the universe: the market loading ratio
 $\rho_i = \beta_i^2 \sigma_m^2 / \sigma_{\gen,i}^2$ stayed below
 $1 - f = 0.90$ for every ticker, because the JumpHMM marginals
 carried enough variance that the market component never crowded out
-the $f = 0.10$ idiosyncratic floor. To check whether the preservation
+the $f = 0.10$ idiosyncratic floor. Because the $R^2$-preserve branch
+had only two empirical assignments, we validated it on synthetic
+trackers where the target $(\beta, R^2)$ was known by construction
+(Fig.~\ref{fig:synth_tracker}). For each $(\beta_{\mathrm{true}},
+R^2_{\mathrm{true}}) \in \{0.8, 1.0, 1.2\} \times \{0.80, 0.85, 0.90,
+0.95, 0.99\}$ we synthesized an asset via
+$g_i(t) = \alpha_{\mathrm{true}} + \beta_{\mathrm{true}} g_m(t) +
+\sigma_{\eps,\mathrm{true}}\,\xi(t)$ with $\sigma_{\eps,\mathrm{true}}^2
+= \beta_{\mathrm{true}}^2 \sigma_m^2 (1 - R^2_{\mathrm{true}}) /
+R^2_{\mathrm{true}}$ and ran the series through the hybrid composer at
+$100$ replications. Across all $15$ cells the branch selector assigned
+\texttt{r2-preserve} as intended, recovered median $\hat\beta$ to
+within $0.001$ of $\beta_{\mathrm{true}}$ and median $\hat{R}^2$ to
+within $0.001$ of $R^2_{\mathrm{true}}$, and cleared the $\alpha = 0.05$
+KS test on at least $99\%$ of replications per cell. The branch is
+therefore correct by construction and by controlled test, with the
+two-ticker empirical occupancy reflecting the S\&P 500 universe rather
+than a limitation of the composition rule. To check whether the preservation
 advantage held across the $\beta$ distribution, we bucketed the
 universe by $\beta$ quartile and recomputed the aggregate metrics
 within each bucket (Table~\ref{tab:beta_bucket}). The hybrid KS pass
@@ -219,3 +236,65 @@ market-driven component of $g$ tightened the marginal toward Gaussian
 along its own axis, mildly attenuating the generator's tails in the
 composed series. The effect was small enough that hybrid still beat
 both baselines by more than an order of magnitude in every bucket.
+
+To probe the clipping branch, which did not trigger anywhere in the
+main run, we re-ran the hybrid composer on the same universe with the
+market growth-rate path rescaled by a factor
+$\gamma \in \{1, 2, 3\}$, holding the calibrated marginals
+$(\alpha_i, \beta_i, \sigma_{\eps,\real,i}, \sigma_{\gen,i})$ fixed and
+drawing $R = 100$ replications per $(\mathrm{ticker},\, \gamma)$ pair
+(Fig.~\ref{fig:stress}). The scale factor entered the market loading
+ratio as $\rho_i(\gamma) = \gamma^2 \beta_i^2 \sigma_m^2 /
+\sigma_{\gen,i}^2$, so increasing $\gamma$ simulated an environment in
+which market variance grew without the per-ticker generators being
+refit. At $\gamma = 1$ no ticker crossed the clipping threshold and the
+hybrid KS pass rate matched the headline value ($50.3\%$). Doubling
+$\sigma_m$ pushed $76.4\%$ of tickers past $\rho_i > 1 - f = 0.90$ and
+the clipping branch activated accordingly; at $\gamma = 3$ the clipping
+rate reached $95.2\%$. Hybrid KS pass rates under stress were $71.8\%$
+at $\gamma = 2$ and $77.3\%$ at $\gamma = 3$, above the unclipped
+baseline, because the clipping branch rescales $\beta^{\eff}$ to hold
+the idiosyncratic floor $f \sigma_{\gen,i}^2$ and thereby preserves
+marginal body shape when the market component would otherwise crowd it
+out. The clipping branch is therefore not a degradation under stress
+but a mechanism that keeps the composed marginal near the generator
+target as $\beta^{\eff\,2}\sigma_m^2$ inflates; its cost, the
+downward-biased effective beta required to hold the floor, was paid
+only on tickers where the unclipped identity could not be maintained.
+
+We also asked whether the hyperparameters of Algorithm~\ref{alg:hybrid},
+the $R^2$-preserve threshold $R^2_{\mathrm{preserve}}$ and the
+idiosyncratic floor $f$, had been tuned to the headline result. We
+re-ran the hybrid composer on the full $423$-ticker universe at every
+point of a $5 \times 5$ grid,
+$R^2_{\mathrm{preserve}} \in \{0.70, 0.75, 0.80, 0.85, 0.90\}$ and
+$f \in \{0.05, 0.10, 0.15, 0.20, 0.30\}$
+(Fig.~\ref{fig:sensitivity}). Hybrid KS pass rate ranged from
+$50.24\%$ to $50.38\%$ across the $25$ cells, a spread of
+$0.14$ percentage points, and the $R^2$-preserve assignment was
+stable at QQQ and SPYG for every threshold at or below $R^2 = 0.85$,
+with QQQ reassigning to the \texttt{hybrid} branch only at the
+$R^2_{\mathrm{preserve}} = 0.90$ corner. The floor $f$ did not change
+any branch assignment in the grid, since the maximum
+$\rho_i = \beta_i^2 \sigma_m^2 / \sigma_{\gen,i}^2$ in the universe
+stayed below $1 - f$ for every $f \in \{0.05, \dots, 0.30\}$. The
+headline number is therefore invariant to the hyperparameter values
+within wide tolerances, and the operating point
+$(R^2_{\mathrm{preserve}} = 0.80,\, f = 0.10)$ reflects a principled
+choice of the $R^2$-branch threshold and a standard floor value
+rather than a data-peeked local optimum.
+
+Finally, we quantified the contribution of generator stochasticity to
+the headline numbers by re-running the full six-composer protocol
+under $8$ random seeds
+(Table~\ref{tab:seed_uncertainty}). The per-composer KS pass rates
+held to within fractions of a percentage point: hybrid sat at
+$50.40 \pm 0.18\%$ across seeds, JumpHMM-on-residuals at
+$75.61 \pm 0.11\%$, block bootstrap at $73.24 \pm 0.09\%$,
+GARCH(1,1)-$t$ at $66.96 \pm 0.30\%$, naive at $4.41 \pm 0.07\%$, and
+Gaussian SIM at $0.60 \pm 0.04\%$. The across-composer differences
+therefore exceeded the seed-induced spread by roughly two orders of
+magnitude. The seed sweep also reproduced the relative ordering of
+the composers without inversions across seeds, confirming that the
+hybrid-vs-baseline gap and the residual-fit-vs-hybrid body-fidelity
+gap were not artifacts of the simulation seed.

@@ -2,10 +2,12 @@
 # 01c-Fit-GARCH.jl
 #
 # Fits a GARCH(1,1) model with Student-t standardized innovations to each
-# non-market ticker's OLS residual series, then simulates n_paths synthetic
-# innovation paths per ticker and caches them. The scoring loop in 03 then
-# consumes the simulated paths directly without re-entering the ARCHModels
-# simulate/fit call, keeping that dependency contained to this script.
+# non-market ticker's OLS residual series and caches the fitted models.
+# Simulation of synthetic innovation paths is done at scoring time in
+# Pipeline.jl, so the seed used at scoring time controls the GARCH path
+# realizations. (Earlier revisions of this script also pre-simulated and
+# cached n_paths paths per ticker; that made the GARCH composer
+# seed-invariant in seed-sweep runs and was removed.)
 #
 # Used by the `compose_garch_t` baseline added to Composers.jl in response
 # to peer-review point P1 (R3: the paper cites Bollerslev 1986 but never
@@ -22,8 +24,6 @@
 #
 # Outputs:
 #   data/garch-t-models.jld2    → Dict{String, Any} fitted GARCH-t models
-#   data/garch-t-sims.jld2      → Dict{String, Vector{Vector{Float64}}}
-#                                  one outer entry per ticker, inner length = n_paths
 # =============================================================================
 
 include(joinpath(@__DIR__, "..", "Include.jl"))
@@ -33,13 +33,11 @@ using ARCHModels
 
 cfg           = load_config()
 market_ticker = cfg["universe"]["market_ticker"]
-n_paths       = Int(cfg["simulation"]["n_paths"])
 seed          = Int(cfg["simulation"]["seed"])
 
 models_cache = joinpath(_PATH_TO_DATA, "garch-t-models.jld2")
-sims_cache   = joinpath(_PATH_TO_DATA, "garch-t-sims.jld2")
-if isfile(models_cache) && isfile(sims_cache)
-    @info "GARCH-t models and sims already cached — skipping."
+if isfile(models_cache)
+    @info "GARCH-t models already cached — skipping."
     exit(0)
 end
 
@@ -55,13 +53,12 @@ calib     = cd["calibration"]
 market_idx = findfirst(==(market_ticker), tickers)
 G_m        = G[:, market_idx]
 T          = length(G_m)
-@info "GARCH-t setup" n_tickers = nrow(calib) T = T n_paths = n_paths
+@info "GARCH-t setup" n_tickers = nrow(calib) T = T
 
-# ── 2. Fit GARCH(1,1)-t per ticker and pre-sample ───────────────────────────
+# ── 2. Fit GARCH(1,1)-t per ticker ──────────────────────────────────────────
 Random.seed!(seed)
 
 garch_models = Dict{String,Any}()
-garch_sims   = Dict{String,Vector{Vector{Float64}}}()
 skipped      = NamedTuple[]
 
 for (i, row) in enumerate(eachrow(calib))
@@ -87,14 +84,7 @@ for (i, row) in enumerate(eachrow(calib))
         model = ARCHModels.fit(GARCH{1,1}, e;
                                dist = StdT,
                                meanspec = NoIntercept{Float64})
-
-        sims_this = Vector{Vector{Float64}}(undef, n_paths)
-        for r in 1:n_paths
-            sims_this[r] = ARCHModels.simulate(model, T).data
-        end
-
         garch_models[ticker] = model
-        garch_sims[ticker]   = sims_this
     catch err
         reason = sprint(showerror, err)
         @warn "GARCH skip" ticker=ticker reason=first(reason, 80)
@@ -105,13 +95,10 @@ end
 if !isempty(skipped)
     skipped_df = DataFrame(skipped)
     CSV.write(joinpath(_PATH_TO_DATA, "garch-t-skipped.csv"), skipped_df)
-    @info "GARCH skipped tickers" n_skipped = nrow(skipped_df) n_fit = length(garch_sims)
+    @info "GARCH skipped tickers" n_skipped = nrow(skipped_df) n_fit = length(garch_models)
 end
 
 @info "Caching GARCH-t models to $models_cache"
 jldsave(models_cache; models = garch_models)
 
-@info "Caching GARCH-t sim paths to $sims_cache"
-jldsave(sims_cache; sims = garch_sims)
-
-@info "Done — $(length(garch_models)) GARCH-t fits and $(length(garch_sims)) sim sets cached."
+@info "Done — $(length(garch_models)) GARCH-t fits cached."
