@@ -20,11 +20,14 @@ the form:
   \label{eq:sim-composition}
 \end{equation}
 from an independent generator draw $\teps_i \in \R^T$ and a shared
-market path $g_m \in \R^T$ over $T$ trading days by rescaling the
-generator draw as $\eps_i = s_i\,\teps_i$ with a scalar
-$s_i \in (0,1]$ chosen to preserve one of two per-asset marginal
-targets while recovering the calibrated single-index model (SIM)
-coefficients $(\alpha_i, \beta_i)$ in the large-$T$ limit.
+market growth-rate path $g_m \in \R^T$ over $T$ trading days
+(formally introduced in Section~\ref{sec:method-setup}, with
+$\teps_i$ assumed independent of $g_m$ and $\E[\teps_i] = 0$) by
+rescaling the generator draw as $\eps_i = s_i\,\teps_i$ with a
+scalar $s_i \in (0,1]$ chosen to preserve one of two per-asset
+marginal targets while recovering the calibrated single-index
+model (SIM) coefficients $(\alpha_i, \beta_i)$ in the large-$T$
+limit.
 
 \subsection{Problem setup}
 \label{sec:method-setup}
@@ -44,9 +47,11 @@ $\sigma_{\gen,i}^2 = \Var[\teps_i]$ for the sample variance of the
 draw. The construction is agnostic to how the generator is fit; in our
 experiments we use the per-asset hidden Markov model with Student-$t$
 emissions and explicit jump components from
-\texttt{JumpHMM.jl}\footnote{\url{https://github.com/varnerlab/JumpHMM.jl}},
+\texttt{JumpHMM.jl} v0.1.0 (commit
+\texttt{9be8099})\footnote{\url{https://github.com/varnerlab/JumpHMM.jl}},
 fit to the asset's own full growth-rate history (not to residuals
-after market detrending). Because the generator's variance reflects
+after market detrending) using the package-default EM tolerance
+and maximum-iteration cap. Because the generator's variance reflects
 the full return rather than the idiosyncratic part, the rescaling
 $\eps_i = s_i\,\teps_i$ with
 $s_i^2 = 1 - \beta_i^2 \sigma_m^2 / \sigma_{\gen,i}^2$ is exactly what
@@ -142,9 +147,8 @@ Define the \emph{market loading ratio}
 \end{equation}
 the share of the generator variance consumed by the market component. Then
 $s_i^2 = 1 - \rho_i$, valid whenever $\rho_i < 1$. The naive composition
-$g_i = \alpha_i + \beta_i g_m + \teps_i$ corresponds to $s_i = 1$; it
-inflates $\Var[g_i]$ by exactly $\beta_i^2 \sigma_m^2$, so the relative
-distortion grows quadratically in $\beta_i$.
+$g_i = \alpha_i + \beta_i g_m + \teps_i$ corresponds to $s_i = 1$ and
+inflates $\Var[g_i]$ by exactly $\beta_i^2 \sigma_m^2$.
 
 \subsection{Beta clipping with an idiosyncratic floor}
 \label{sec:method-clipping}
@@ -188,10 +192,9 @@ wants to keep. For some assets the generator marginal is not really the
 quantity of interest; the SIM relationship to the market is. Index ETFs are
 the canonical example. SPY against itself has $\beta = 1$, $R^2 = 1$,
 $\sigma_\eps = 0$ exactly. QQQ against SPY has $R^2 \approx 0.84$, SPYG
-against SPY has $R^2 \approx 0.86$. For these tickers the practitioner cares that $\hat\beta$ recovers
-to its calibrated value and that $R^2$ recovers to its calibrated
-value, neither inflated to one by dropping $\eps$ nor implied by
-unrelated marginal-variance bookkeeping.
+against SPY has $R^2 \approx 0.86$. For these tickers we require $\hat\beta$ and $R^2$ to recover their
+calibrated values, neither inflated to one by dropping $\eps$ nor
+implied by unrelated marginal-variance bookkeeping.
 
 We branch on the real-data calibration $R^2_{i,\real}$. Pick a threshold
 $R^2_{\mathrm{preserve}}$ that separates index-tracking assets from
@@ -309,10 +312,14 @@ low-$\beta$ assets and noticeably at high $\beta$. The construction
 injects \emph{contemporaneous} market dependence only; lagged
 dependence (lead-lag effects, market-driven volatility clustering)
 requires a richer construction, which we return to in
-Section~\ref{sec:discussion}. The pipeline is modest in compute:
-fitting the $423$ per-asset JumpHMM marginals runs once offline
-against the $2014$--$2024$ price histories; the scoring loop across
+Section~\ref{sec:discussion}. The pipeline (\texttt{Pipeline.jl}, in
+the released code) is modest in compute: fitting the $423$ per-asset
+JumpHMM marginals runs once offline against the $2014$--$2024$ price
+histories and is cached, while GARCH(1,1)-$t$ residual paths are
+simulated per (ticker, replication) at scoring time rather than
+cached, so each run consumes a fresh draw. The scoring loop across
 $423 \times 100 = 42{,}300$ per-ticker replications per composer
-runs in minutes on a commodity laptop, and the full six-composer
-sweep reported in Section~\ref{sec:results} completes within an
-hour on the same hardware.
+runs in minutes on a 2023 MacBook Pro (Apple M2 Pro, 16~GB RAM),
+and the full six-composer sweep reported in
+Section~\ref{sec:results} completes within an hour on the same
+hardware.

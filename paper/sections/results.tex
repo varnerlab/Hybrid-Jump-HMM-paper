@@ -31,13 +31,8 @@ ordinary least squares of the asset's growth-rate history on $g_m$,
 yielding the calibrated quadruple
 $(\alpha_i, \beta_i, R^2_{i,\real}, \sigma_{\eps,\real,i})$. The
 universe spanned $\beta \in [0.01, 1.79]$ with median $\beta = 1.00$
-and quartiles $(0.81, 1.00, 1.18)$; $R^2_{i,\real}$ ranged from
-$0.001$ to $0.933$ (Fig.~\ref{fig:r2_distribution}), with only two
-tickers above the $R^2_{\mathrm{preserve}} = 0.80$ threshold (QQQ at
-$R^2 = 0.861$ and SPYG at $R^2 = 0.933$) and the highest-$R^2$
-individual stock (BLK at $R^2 = 0.645$) a structural $\sim 0.22$
-below; the branch assignment is therefore empirically
-tracker-specific on this universe, not a threshold artifact.
+and quartiles $(0.81, 1.00, 1.18)$, with $R^2_{i,\real}$ ranging
+from $0.001$ to $0.933$ (Fig.~\ref{fig:r2_distribution}).
 
 The composition rules used a \emph{paired innovation} protocol
 where applicable: for each non-market ticker and each replication
@@ -73,10 +68,10 @@ analogously. The \emph{GARCH(1,1)-$t$} composer fits a
 conditional-variance model per ticker~\cite{bollerslev1986} and
 substitutes a simulated residual path; $30$ of the $423$ tickers
 yielded a non-stationary GARCH fit ($\alpha + \beta \ge 1$ at the
-optimizer's termination) and were excluded from that composer only. All three composers skipped the
-optional cross-sectional rank reorder in Algorithm~\ref{alg:hybrid} so
-that per-ticker metrics reflected the marginal construction in
-isolation; cross-sectional dependence is studied separately in the
+optimizer's termination) and were excluded from that composer only. Across all composers, we
+skipped the optional cross-sectional rank reorder in
+Algorithm~\ref{alg:hybrid} so that per-ticker metrics reflected the
+marginal construction in isolation; cross-sectional dependence is studied separately in the
 companion \texttt{JumpHMM.jl} paper and is not the object of this
 evaluation. For every composed series we computed three metric
 families against the ticker's real growth-rate history and the real
@@ -121,13 +116,16 @@ tighter than the naive baseline but looser than the Gaussian
 baseline, reflecting that the variance-preserving branch targeted
 $\sigma_{\gen,i}^2$ rather than $R^2_{i,\real}$.
 
-The three residual-fit composers sidestep the variance-inflation
-problem entirely by fitting a generator directly to $e_i$, which by
-construction has variance $\sigma_{\eps,\real,i}^2$ and no
-double-counted market component. Their aggregate KS pass rates were
-$75.8\%$ (JumpHMM-on-residuals), $73.3\%$ (block bootstrap), and
-$66.9\%$ (GARCH(1,1)-$t$), each higher than hybrid's $50.4\%$
-(Table~\ref{tab:aggregate}, Fig.~\ref{fig:baseline}). The advantage
+We next computed the same marginal-fidelity metrics for the three
+residual-fit composers, and observed that all three beat hybrid on
+the body of the distribution (Table~\ref{tab:aggregate},
+Fig.~\ref{fig:baseline}). The three composers sidestep the
+variance-inflation problem entirely by fitting a generator directly
+to $e_i$, which by construction has variance
+$\sigma_{\eps,\real,i}^2$ and no double-counted market component.
+Their aggregate KS pass rates were $75.8\%$
+(JumpHMM-on-residuals), $73.3\%$ (block bootstrap), and $66.9\%$
+(GARCH(1,1)-$t$), each higher than hybrid's $50.4\%$. The advantage
 sat in the body of the distribution rather than the tails: hybrid's
 median excess kurtosis ($7.17$) and Hill upper-tail index ($0.365$)
 matched JumpHMM-on-residuals ($7.26$ and $0.365$) to within
@@ -151,16 +149,17 @@ all hit coverage within one-tenth of a percentage point of nominal
 ($0.95$, $0.99$, $1.09$, and $1.09\%$ respectively), and their
 Kupiec pass rates clustered between $72$ and $86\%$. Hybrid and
 JumpHMM-on-residuals were statistically indistinguishable on this
-test: the $25$pp body-fidelity gap between them did not translate to
+test: the $25$ percentage-point body-fidelity gap between them did not translate to
 a Value-at-Risk accuracy difference. Hybrid's standalone advantage
 is therefore scoped: it is the right rule when a full-return
 per-asset generator is the given input, and it delivers tail
 accuracy on par with a dedicated residual generator without
 requiring a separate fitting stage.
 
-To see where the KS advantage over the naive baseline came from, we
-next plotted per-ticker KS pass rate and per-ticker marginal variance
-ratio $\mathrm{Var}(g) / \sigma_{\gen}^2$ as functions of the
+Having established that body-fidelity did not translate into VaR
+accuracy, we next traced where the KS advantage over the naive
+baseline came from by plotting per-ticker KS pass rate and
+per-ticker marginal variance ratio $\mathrm{Var}(g) / \sigma_{\gen}^2$ as functions of the
 calibrated $\beta$ (Fig.~\ref{fig:preservation}). The variance-ratio
 panel made the mechanism explicit: the naive scatter traced the
 theoretical curve $1 + \rho_i$ with
@@ -190,14 +189,19 @@ $\sim 0.22$.
 Having established aggregate preservation, we next examined the
 branch-selection outcome on this universe and asked whether the
 advantage held across the $\beta$ distribution. Applying the
-branch-selection rule of Section~\ref{sec:method-algorithm} to the
+branch-selection rule of Algorithm~\ref{alg:hybrid} to the
 $423$-ticker universe produced $421$ assignments to the
 \texttt{hybrid} branch, $2$ to the \texttt{r2-preserve} branch, and
-$0$ to the \texttt{hybrid-clipped} branch
+no assignments to the \texttt{hybrid-clipped} branch
 (Fig.~\ref{fig:branch_map}, Table~\ref{tab:branch}). The two
 $R^2$-preserving tickers were QQQ ($R^2 = 0.861$) and SPYG
 ($R^2 = 0.933$), both ETFs that track market-capitalization indices
-closely; their KS pass rate under hybrid composition was $99\%$,
+closely; the highest-$R^2$ individual stock (BLK at $R^2 = 0.645$)
+sat a structural $\sim 0.22$ below the
+$R^2_{\mathrm{preserve}} = 0.80$ threshold, so the branch
+assignment was empirically tracker-specific on this universe rather
+than a threshold artifact. The two trackers' KS pass rate under
+hybrid composition was $99\%$,
 consistent with the $R^2$-preserving branch recovering both the
 calibrated $\beta$ and the calibrated $R^2$ by construction. Clipping
 did not trigger anywhere in the universe: the market loading ratio
@@ -230,7 +234,7 @@ in the high-$\beta$ quartile; the Gaussian SIM pass rate stayed pinned
 near zero across all buckets; the naive pass rate collapsed from
 $16\%$ in Q1 to under $1\%$ in Q3 and Q4 as $\beta_i^2 \sigma_m^2$
 grew. The gentle hybrid decline at high $\beta$ reflected the caveat
-noted in Section~\ref{sec:method-algorithm}: as
+noted alongside Algorithm~\ref{alg:hybrid}: as
 $\beta^{\eff\,2}\sigma_m^2$ grew toward $(1 - f)\sigma_{\gen}^2$, the
 market-driven component of $g$ tightened the marginal toward Gaussian
 along its own axis, mildly attenuating the generator's tails in the

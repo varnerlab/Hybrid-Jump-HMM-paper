@@ -50,7 +50,7 @@ marginal: the body widens, the kurtosis drops, and the heavy tails
 that the generator was built to deliver are pushed out into a
 Gaussian-flavored distribution driven by the market term, defeating
 the purpose of fitting a heavy-tailed generator in the first place.
-The dual failure mode, drawing the residual from a Gaussian with
+The opposite failure mode, drawing the residual from a Gaussian with
 variance taken from the real ordinary least squares (OLS) fit,
 recovers the SIM coefficients exactly but erases the marginal
 structure entirely. Neither naive option satisfies both targets at
@@ -77,29 +77,21 @@ limit with no special-casing. Branch
 selection is driven entirely by the calibrated $R^2$, and each
 asset carries a persisted construction flag (\texttt{hybrid},
 \texttt{hybrid-clipped}, \texttt{r2-preserve}) so downstream
-consumers can audit which path each asset took. The procedure
+consumers can audit which path each asset took, and the procedure
 generalizes to any new ticker without external metadata.
 
 The distinction between this paper and the companion
 \texttt{JumpHMM.jl} validation paper~\cite{alswaidanVarner2026jdiq}
-deserves explicit statement. The companion paper fits and validates
-the per-asset JumpHMM marginals themselves: Student-$t$ emissions,
-jump parameters, Laplace-partition state counts, per-ticker tuning,
-and cross-sectional copula specifications on the stacked outputs.
-Its question is whether the generator reproduces real marginal and
-joint statistics when used as-is. The present paper takes the
-generator as given and asks a separate question: once a per-asset
-generator hits the marginal target in isolation, how should it be
-composed with a single-index market factor so that neither the
-marginal nor the factor relationship is broken? The variance
-correction, the sign-preserving clip rule, the $R^2$-preserving
-branch, the auditable construction flag, and the empirical
-comparison of composition rules on a common universe are specific
-to the present work and do not appear in the companion. The two
-contributions are orthogonal: the companion builds the per-asset
-generator; this paper builds the composition rule that lets that
-generator enter a factor-model pipeline without the
-marginal-versus-factor tradeoff.
+deserves explicit statement. The companion fits and validates the
+per-asset JumpHMM marginals themselves and asks whether the
+generator reproduces real marginal and joint statistics when used
+as-is. The present paper takes the generator as given and asks how
+it should be composed with a single-index market factor without
+breaking either target. The variance correction, the
+sign-preserving clip rule, the $R^2$-preserving branch, the
+construction flag, and the empirical comparison of composition
+rules on a common universe are specific to the present work; the
+two contributions are orthogonal.
 
 In this study, we tested the construction on the $424$-ticker US
 equity universe and SPY market path used by the companion
@@ -124,17 +116,17 @@ attained pass rates of $67$ to $76\%$. On the $99\%$ Value-at-Risk
 backtest, hybrid and JumpHMM-on-residuals delivered statistically
 indistinguishable coverage (Kupiec pass rates $80\%$ and $83\%$
 respectively); the strawman composers failed coverage at around
-$45\%$. The broader implication is that the
-marginal-versus-factor tradeoff long assumed in SIM composition is
-not fundamental: a single closed-form scalar correction closes it to
-within a few percentage points of a dedicated residual-fit generator
-(JumpHMM-on-residuals, block bootstrap, or GARCH(1,1)-$t$) on
-marginal-body fidelity, and matches the residual-fit generator on a
-one-day $99\%$ Value-at-Risk backtest against the real
-growth-rate histories. The hybrid composition rule trades a small
-body-fidelity gap for generator agnosticism: any per-asset full-return
-marginal, including heavy-tailed HMM-with-jumps or regime-switching
-generators calibrated once for other purposes, can enter the factor
-pipeline unchanged. The correction generalizes to richer factor
-structures (multi-factor SIM, lagged-factor SIM) without changing the
+$45\%$. These results indicated that the marginal-versus-factor tradeoff
+long assumed in SIM composition was not fundamental: a single
+closed-form scalar correction closed it to within a few percentage
+points of a dedicated residual-fit generator (JumpHMM-on-residuals,
+block bootstrap, or GARCH(1,1)-$t$) on marginal-body fidelity, and
+matched the residual-fit generator on a one-day $99\%$ Value-at-Risk
+backtest against the real growth-rate histories. The hybrid
+composition rule traded a small body-fidelity gap for generator
+agnosticism: any per-asset full-return marginal, including
+heavy-tailed HMM-with-jumps or regime-switching generators
+calibrated once for other purposes, could enter the factor pipeline
+unchanged. The correction generalizes to richer factor structures
+(multi-factor SIM, lagged-factor SIM) without changing the
 underlying algebra.

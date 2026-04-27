@@ -13,35 +13,35 @@ expansion of $\Var[g_i]$. Because the per-asset JumpHMM marginals are
 fit to each asset's full growth-rate history, including its
 market-correlated component, the assumption is not automatic: a
 generator that picked up a residual market loading would invalidate
-the closed-form scaling. We checked the assumption empirically by
-sampling $100$ innovation paths $\teps_i^{(r)}$ per ticker from each
-generator and computing the normalized cross-covariance against the
-real SPY path:
+the closed-form scaling. We tested the assumption empirically by sampling $R = 100$
+innovation paths $\teps_i^{(r)}$ per ticker from each generator and
+computing the normalized cross-covariance against the real SPY path:
 \begin{equation}
   \mathrm{cov}^{\mathrm{norm}}_i
   = \frac{1}{R} \sum_{r=1}^{R}
     \frac{\Cov[\teps_i^{(r)},\, g_m]}{\sigma_{\teps,i}\, \sigma_m}.
 \end{equation}
-Per-ticker values are plotted as histograms in
-Fig.~\ref{fig:cov_diag}. The full-return JumpHMM generator
-(\texttt{jumphmm\_full}, used by hybrid and naive) sits within
-$\pm 0.05$ of zero with a slight rightward bias of order $10^{-2}$;
-the residual-fit JumpHMM generator (\texttt{jumphmm\_residual}, used
-by JumpHMM-on-residuals) and the Gaussian baseline are both centered
-at zero with no detectable bias. The independence assumption is
-therefore satisfied to within sampling tolerance for every composer
-that uses it, and the derivation of Eq.~\eqref{eq:scale} holds in
-practice.
+Per-ticker values were plotted as histograms in
+Fig.~\ref{fig:cov_diag}. Across the $423$ tickers, the full-return
+JumpHMM generator (\texttt{jumphmm\_full}, used by hybrid and naive)
+sat within $\pm 0.006$ of zero with a per-ticker mean bias of
+$1.5\times 10^{-4}$; the residual-fit JumpHMM generator
+(\texttt{jumphmm\_residual}, used by JumpHMM-on-residuals) and the
+Gaussian baseline were also centered at zero (mean
+$7\times 10^{-5}$ and $2.3\times 10^{-4}$ respectively). The
+independence assumption was therefore satisfied to within sampling
+tolerance for all three generators, and the derivation of
+Eq.~\eqref{eq:scale} held in practice.
 
 \begin{figure}[t]
   \centering
-  \includegraphics[width=0.85\textwidth]{figs/fig10_cov_diagnostic.pdf}
+  \includegraphics[width=0.85\textwidth]{figs/figS1_cov_diagnostic.pdf}
   \caption{\textbf{Empirical normalized cross-covariance
     $\Cov[\teps_i, g_m] / (\sigma_{\teps,i}\, \sigma_m)$ across
-    the $423$-ticker universe.} Histograms are stacked per generator,
+    the $423$-ticker universe.} Histograms were stacked per generator,
     with each per-ticker value averaged over $R = 100$ innovation
     draws. The full-return JumpHMM, residual-fit JumpHMM, and
-    Gaussian generators all cluster at zero, validating the
+    Gaussian generators all clustered at zero, validating the
     independence assumption used to derive
     Eq.~\eqref{eq:scale} in Section~\ref{sec:method-variance}.}
   \label{fig:cov_diag}

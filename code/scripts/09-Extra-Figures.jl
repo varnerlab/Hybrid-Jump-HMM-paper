@@ -12,7 +12,7 @@
 #   fig7_r2_distribution.pdf   R² histogram on 423-ticker universe
 #   fig8_var_backtest.pdf      VaR 99%/95% exceedance rates by composer
 #   fig9_synth_tracker.pdf     synthetic-tracker R² recovery
-#   fig10_cov_diagnostic.pdf   Cov(ε̃, g_m) / (σ_ε σ_m) histograms
+#   figS1_cov_diagnostic.pdf   Cov(ε̃, g_m) / (σ_ε σ_m) histograms
 # =============================================================================
 
 include(joinpath(@__DIR__, "..", "Include.jl"))
@@ -252,10 +252,10 @@ if isfile(cov_file)
         histogram!(p10, sub.cov_norm_mean; bins = 35, alpha = 0.5,
                    label = name, normalize = false)
     end
-    savefig(p10, joinpath(_PATH_TO_PFIGS, "fig10_cov_diagnostic.pdf"))
-    @info "Wrote fig10_cov_diagnostic.pdf"
+    savefig(p10, joinpath(_PATH_TO_PFIGS, "figS1_cov_diagnostic.pdf"))
+    @info "Wrote figS1_cov_diagnostic.pdf"
 else
-    @info "cov-diagnostic.csv missing — skipping Figure 10."
+    @info "cov-diagnostic.csv missing — skipping Figure S1."
 end
 
 @info "All available new figures written to $_PATH_TO_PFIGS"

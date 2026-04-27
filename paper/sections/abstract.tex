@@ -2,43 +2,32 @@
 
 Per-asset generators for synthetic financial returns, such as the
 hidden Markov models with explicit jump components used in the
-\texttt{JumpHMM.jl} package, are built to preserve marginal structure
-(heavy tails, regime switching) but say nothing about cross-sectional
-factor dependence. The standard fix is to compose each generator draw
-with a single-index market factor, but the naive recipe inflates the
-marginal variance by a term that grows quadratically in the factor
-loading, distorting the very marginal the generator was designed to
-preserve; replacing the generator residual with a Gaussian draw
-eliminates the distortion but discards the marginal entirely. We
-derived a closed-form variance correction that sits between these two
-failure modes, rescaling the idiosyncratic draw by a scalar chosen so
-that the composed series inherits the generator's marginal variance
-exactly while recovering the calibrated factor loading. The correction
-was paired with a sign-preserving clip that engaged whenever the market
-component would have exceeded the generator variance, keeping defensive
-assets defensive, and a separate branch for index-tracking assets
-targeted the calibrated coefficient of determination rather than the
-marginal, with the SPY-on-itself identity recovered as a degenerate
-limit without special-casing. Branch selection was driven entirely by
-the calibrated coefficient of determination, requiring no external
-metadata, and each asset carried a persisted construction flag so
-downstream consumers could audit which path it took. Evaluated on a $424$-ticker US equity and exchange-traded fund (ETF)
+\texttt{JumpHMM.jl} package, preserve marginal structure but say
+nothing about cross-sectional factor dependence. The standard fix
+is to compose each generator draw with a single-index market
+factor, but the naive recipe inflates the marginal variance
+quadratically in the factor loading, while replacing the residual
+with a Gaussian draw recovers the loading exactly but discards
+the marginal entirely. We derived a closed-form variance
+correction that sat between these failure modes, rescaling the
+idiosyncratic draw by a scalar chosen so the composed series
+inherited the generator's marginal variance while recovering the
+calibrated factor loading. A sign-preserving clip and an
+$R^2$-driven branch for index-tracking assets handled the
+remaining edge cases. Evaluated on a $424$-ticker US equity and ETF
 universe against the SPY market path with \texttt{JumpHMM.jl}
-marginals, the hybrid construction recovered the factor loading to a
-median absolute error of $0.018$ and passed a per-ticker
+marginals, the hybrid construction recovered the factor loading to
+a median absolute error of $0.018$ and passed a per-ticker
 Kolmogorov--Smirnov test against the real marginal at rate $50\%$,
-versus $4\%$ for the naive composition and below $1\%$ for the
+versus $4\%$ for naive composition and below $1\%$ for the
 Gaussian-residual baseline. Three alternative generators fit
 directly to OLS residuals (JumpHMM-on-residuals, Politis--Romano
-block bootstrap, and GARCH(1,1)-$t$) achieved higher KS pass rates
-of $67$--$76\%$; on a per-ticker one-day $99\%$ Value-at-Risk
+block bootstrap, GARCH(1,1)-$t$) achieved higher KS pass rates of
+$67$--$76\%$; on a per-ticker one-day $99\%$ Value-at-Risk
 backtest, hybrid and residual-fit JumpHMM were statistically
-indistinguishable (mean exceedance $0.95\%$ and $0.99\%$ against the
-nominal $1\%$, Kupiec unconditional-coverage pass rates $80\%$ and
-$83\%$). Hybrid is therefore the appropriate choice when the
-per-asset generator is specified in full-return units (as generators
-often are, for distributional interpretability or calibration
-reuse); the residual-fit alternatives are stronger on marginal body
-fidelity when the workflow permits a dedicated residual generator.
-All artifacts, scripts, and the fitted marginal cache are released
-with the paper.
+indistinguishable (mean exceedance $0.95\%$ and $0.99\%$ against
+the nominal $1\%$, Kupiec pass rates $80\%$ and $83\%$). Hybrid
+was therefore preferred when the per-asset generator was specified
+in full-return units; the residual-fit alternatives were stronger
+on marginal body fidelity when the workflow permitted a dedicated
+residual generator.

@@ -14,7 +14,7 @@ construction proposed here, and three residual-fit alternatives
 bootstrap~\cite{politisRomano1994}, and a per-ticker GARCH(1,1)-$t$
 fit~\cite{bollerslev1986}). The one-line variance correction,
 together with the sign-preserving clip rule and the $R^2$-preserving
-branch, closes a gap between two previously unsatisfying options for
+branch, closes a gap between two previously incomplete options for
 building synthetic asset paths with both marginal structure and
 factor structure: naive composition gives both but distorts the
 marginal by $\beta^2 \sigma_m^2$, while Gaussian-residual SIM gives
@@ -28,21 +28,20 @@ pass rates than hybrid on marginal body fidelity ($67$ to $76\%$
 versus $50\%$), but matched hybrid on the $99\%$ Value-at-Risk
 coverage test to within statistical tolerance
 (Table~\ref{tab:var}); the body-fidelity gap did not translate to a
-tail-accuracy gap. Hybrid's contribution is therefore scoped: it is
-the best composition rule when the per-asset generator is specified
-in full-return units (a common setting, since per-asset generators
-are often calibrated for distributional interpretability, cached for
-other pipelines, or chosen to retain regime-switching or jump
-structure), and it delivers $99\%$ VaR accuracy on par with a
-dedicated residual generator without requiring a separate fitting
-stage. The gap was large
-enough to matter in practice: at the high-$\beta$ end of the
-universe, naive composition inflated the marginal variance by over
-$70\%$ relative to the generator target (Fig.~\ref{fig:preservation}). Because branch selection is
-driven entirely by the calibrated $R^2$ and each asset carries a
-persisted construction flag, the procedure runs uniformly across an
-arbitrary ticker universe without external metadata and leaves an
-audit trail that downstream consumers can inspect. No part of the
+tail-accuracy gap. The contribution of hybrid was therefore scoped to the case where
+the per-asset generator was specified in full-return units (a common
+setting, since per-asset generators are often calibrated for
+distributional interpretability, cached for other pipelines, or
+chosen to retain regime-switching or jump structure); in that case
+hybrid delivered $99\%$ VaR accuracy on par with a dedicated
+residual generator without requiring a separate fitting stage. The variance-inflation gap was large enough to matter in
+practice: at the high-$\beta$ end of the universe, naive composition
+inflated the marginal variance by over $70\%$ relative to the
+generator target (Fig.~\ref{fig:preservation}). Because branch selection was
+driven entirely by the calibrated $R^2$ and each asset carried a
+persisted construction flag, the procedure ran uniformly across the
+ticker universe without external metadata and left an audit trail
+that downstream consumers could inspect. No part of the
 construction is new in a deep sense; the contribution is a minimal,
 practitioner-ready recipe with an auditable branch flag and a
 principled treatment of the degenerate tracker limit, usable as a
@@ -86,7 +85,8 @@ strategies remain a distinct scope boundary: the temporal structure
 of the residual draw becomes load-bearing in a way that
 contemporaneous composition does not address.
 
-Clipping did not trigger anywhere in the US-equity universe used here,
+A related boundary on the recipe was the clipping rule. Clipping
+did not trigger anywhere in the US-equity universe used here,
 because the JumpHMM marginals carried enough variance that
 $\rho_i = \beta_i^2 \sigma_m^2 / \sigma_{\gen,i}^2$ stayed below $0.90$
 even for the highest-$\beta$ ticker. Clipping becomes relevant in two
@@ -156,7 +156,9 @@ high-turnover strategies on JumpHMM-corrected paths should benchmark
 absolute return levels against a static-allocation baseline on the
 same paths, or adopt the bootstrap or GARCH alternatives when
 residual autocorrelation is the load-bearing structure for the
-downstream task. Two further extensions follow naturally. Multi-factor SIM replaces
+downstream task.
+
+Two further extensions follow naturally. Multi-factor SIM replaces
 the single market factor with $K$ factors, requiring $\rho_i$ to
 become the sum of factor contributions and the loading vector to be
 clipped rather than a scalar, though the branch logic is unchanged.
