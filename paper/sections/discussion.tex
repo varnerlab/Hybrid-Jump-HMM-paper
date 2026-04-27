@@ -22,13 +22,14 @@ the factor exactly but strips the marginal. The hybrid construction
 sat between the Gaussian-residual and naive baselines: it recovered
 $\beta$ to the same precision as either, held the generator marginal
 to its target variance in every ticker, and preserved the generator's
-tails at a level indistinguishable from the naive composition. The
+tails at a level indistinguishable from the naive composition
+(Fig.~\ref{fig:preservation}, Table~\ref{tab:aggregate}). The
 three residual-fit composers produced higher Kolmogorov--Smirnov
 pass rates than hybrid on marginal body fidelity ($67$ to $76\%$
-versus $50\%$), but matched hybrid on the $99\%$ Value-at-Risk
-coverage test to within statistical tolerance
-(Table~\ref{tab:var}); the body-fidelity gap did not translate to a
-tail-accuracy gap. The contribution of hybrid was therefore scoped to the case where
+versus $50\%$, Table~\ref{tab:aggregate}), but matched hybrid on
+the $99\%$ Value-at-Risk coverage test to within statistical
+tolerance (Table~\ref{tab:var}); the body-fidelity gap did not
+translate to a tail-accuracy gap. The contribution of hybrid was therefore scoped to the case where
 the per-asset generator was specified in full-return units (a common
 setting, since per-asset generators are often calibrated for
 distributional interpretability, cached for other pipelines, or

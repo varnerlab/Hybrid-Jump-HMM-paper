@@ -25,10 +25,11 @@ Per-ticker values were plotted as histograms in
 Fig.~\ref{fig:cov_diag}. Across the $423$ tickers, the full-return
 JumpHMM generator (\texttt{jumphmm\_full}, used by hybrid and naive)
 sat within $\pm 0.006$ of zero with a per-ticker mean bias of
-$1.5\times 10^{-4}$; the residual-fit JumpHMM generator
-(\texttt{jumphmm\_residual}, used by JumpHMM-on-residuals) and the
-Gaussian baseline were also centered at zero (mean
-$7\times 10^{-5}$ and $2.3\times 10^{-4}$ respectively). The
+$1.5\times 10^{-4}$ (Fig.~\ref{fig:cov_diag}); the residual-fit
+JumpHMM generator (\texttt{jumphmm\_residual}, used by
+JumpHMM-on-residuals) and the Gaussian baseline were also centered
+at zero (mean $7\times 10^{-5}$ and $2.3\times 10^{-4}$
+respectively, Fig.~\ref{fig:cov_diag}). The
 independence assumption was therefore satisfied to within sampling
 tolerance for all three generators, and the derivation of
 Eq.~\eqref{eq:scale} held in practice.

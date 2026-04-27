@@ -108,15 +108,16 @@ fit to residuals~\cite{bollerslev1986}. We measured SIM recovery,
 marginal fidelity, and per-ticker one-day Value-at-Risk accuracy,
 reporting each per construction-flag branch. All six composers
 recovered the factor loading to a median absolute error of $0.018$
-(hybrid, residual-fit, bootstrap, GARCH) or $0.022$ (naive). On
-marginal fidelity the hybrid construction held the Kolmogorov--Smirnov
-pass rate at $50\%$, against $4\%$ for the naive composition and below
-$1\%$ for the Gaussian baseline; the three residual-fit alternatives
-attained pass rates of $67$ to $76\%$. On the $99\%$ Value-at-Risk
-backtest, hybrid and JumpHMM-on-residuals delivered statistically
-indistinguishable coverage (Kupiec pass rates $80\%$ and $83\%$
-respectively); the strawman composers failed coverage at around
-$45\%$. These results indicated that the marginal-versus-factor tradeoff
+(hybrid, residual-fit, bootstrap, GARCH) or $0.022$ (naive)
+(Table~\ref{tab:aggregate}). On marginal fidelity the hybrid
+construction held the Kolmogorov--Smirnov pass rate at $50\%$,
+against $4\%$ for the naive composition and below $1\%$ for the
+Gaussian baseline; the three residual-fit alternatives attained
+pass rates of $67$ to $76\%$ (Table~\ref{tab:aggregate}). On the
+$99\%$ Value-at-Risk backtest, hybrid and JumpHMM-on-residuals
+delivered statistically indistinguishable coverage (Kupiec pass
+rates $80\%$ and $83\%$ respectively), while the strawman composers
+failed coverage at around $45\%$ (Table~\ref{tab:var}). These results indicated that the marginal-versus-factor tradeoff
 long assumed in SIM composition was not fundamental: a single
 closed-form scalar correction closed it to within a few percentage
 points of a dedicated residual-fit generator (JumpHMM-on-residuals,
