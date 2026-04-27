@@ -71,12 +71,13 @@ yielded a non-stationary GARCH fit ($\alpha + \beta \ge 1$ at the
 optimizer's termination) and were excluded from that composer only. Across all composers, we
 skipped the optional cross-sectional rank reorder in
 Algorithm~\ref{alg:hybrid} so that per-ticker metrics reflected the
-marginal construction in isolation; cross-sectional dependence is studied separately in the
-companion \texttt{JumpHMM.jl} paper and is not the object of this
-evaluation. For every composed series we computed three metric
-families against the ticker's real growth-rate history and the real
-SPY path: SIM recovery reported $(\hat\alpha_i, \hat\beta_i,
-\hat R^2_i)$ from OLS of $g_i^{(r)}$ on $g_m$ along with the absolute
+marginal construction in isolation; cross-sectional dependence is
+studied separately in the companion \texttt{JumpHMM.jl} paper and
+is not the object of this evaluation.
+
+For every composed series we computed three metric families against
+the ticker's real growth-rate history and the real SPY path: SIM
+recovery reported $(\hat\alpha_i, \hat\beta_i, \hat R^2_i)$ from OLS of $g_i^{(r)}$ on $g_m$ along with the absolute
 deviations $|\hat\beta - \beta|$ and $|\hat R^2 - R^2_{\real}|$;
 marginal fidelity was assessed by Kolmogorov--Smirnov (KS) and
 Anderson--Darling (AD) two-sample $p$-values against the real

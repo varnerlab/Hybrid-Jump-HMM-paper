@@ -80,24 +80,21 @@ asset carries a persisted construction flag (\texttt{hybrid},
 consumers can audit which path each asset took, and the procedure
 generalizes to any new ticker without external metadata.
 
-The distinction between this paper and the companion
-\texttt{JumpHMM.jl} validation paper~\cite{alswaidanVarner2026jdiq}
-deserves explicit statement. The companion fits and validates the
-per-asset JumpHMM marginals themselves and asks whether the
-generator reproduces real marginal and joint statistics when used
-as-is. The present paper takes the generator as given and asks how
-it should be composed with a single-index market factor without
-breaking either target. The variance correction, the
-sign-preserving clip rule, the $R^2$-preserving branch, the
-construction flag, and the empirical comparison of composition
-rules on a common universe are specific to the present work; the
-two contributions are orthogonal.
-
-In this study, we tested the construction on the $424$-ticker US
-equity universe and SPY market path used by the companion
-\texttt{JumpHMM.jl} validation paper of Alswaidan and
-Varner~\cite{alswaidanVarner2026jdiq}, comparing six composition
-recipes on the same generators and the same market path: the naive
+In this study, the distinction between the present paper and the
+companion \texttt{JumpHMM.jl} validation paper of Alswaidan and
+Varner~\cite{alswaidanVarner2026jdiq} is worth stating explicitly:
+the companion fits and validates the per-asset JumpHMM marginals
+themselves and asks whether the generator reproduces real marginal
+and joint statistics when used as-is, while the present paper takes
+the generator as given and asks how it should be composed with a
+single-index market factor without breaking either target. The
+variance correction, the sign-preserving clip rule, the
+$R^2$-preserving branch, the construction flag, and the empirical
+comparison of composition rules on a common universe are specific
+to this work; the two contributions are orthogonal. We tested the
+construction on the $424$-ticker US equity universe and SPY market
+path used by the companion paper, comparing six composition recipes
+on the same generators and the same market path: the naive
 composition, a Gaussian-residual SIM that recovers the calibrated
 factor coefficients and $R^2$ but loses the marginal structure, the
 hybrid construction proposed here, a JumpHMM marginal fit directly

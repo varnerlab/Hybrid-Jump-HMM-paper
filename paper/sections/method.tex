@@ -21,8 +21,8 @@ the form:
 \end{equation}
 from an independent generator draw $\teps_i \in \R^T$ and a shared
 market growth-rate path $g_m \in \R^T$ over $T$ trading days
-(formally introduced in Section~\ref{sec:method-setup}, with
-$\teps_i$ assumed independent of $g_m$ and $\E[\teps_i] = 0$) by
+(formally introduced below, with $\teps_i$ assumed independent of
+$g_m$ and $\E[\teps_i] = 0$) by
 rescaling the generator draw as $\eps_i = s_i\,\teps_i$ with a
 scalar $s_i \in (0,1]$ chosen to preserve one of two per-asset
 marginal targets while recovering the calibrated single-index
@@ -34,10 +34,10 @@ limit.
 
 We are given a single market growth-rate path $g_m \in \R^T$ over $T$
 trading days, with sample mean $\mu_m$ and sample variance
-$\sigma_m^2 = \Var[g_m]$. In the experiments of
-Section~\ref{sec:results} the market path is the SPY total-return
-growth-rate series; the construction is agnostic to whether $g_m$ is a
-single-name proxy, a synthetic index, or a model-generated path.
+$\sigma_m^2 = \Var[g_m]$. In our experiments the market path is the
+SPY total-return growth-rate series; the construction is agnostic to
+whether $g_m$ is a single-name proxy, a synthetic index, or a
+model-generated path.
 
 For each of $N$ assets indexed by $i = 1,\dots,N$, we are given a draw
 $\teps_i \in \R^T$ from a generator that produces growth rates with
@@ -66,7 +66,7 @@ sampled independently of $g_m$ (verified empirically across the
 $423$-ticker universe in Fig.~\ref{fig:cov_diag}). If the generator
 already carries non-trivial market correlation, the residual
 covariance can be subtracted from $\beta_i$ before applying the
-correction; we return to this in Section~\ref{sec:discussion}.
+correction; we return to this point in the discussion.
 
 For each asset we are given a calibrated triple
 $(\alpha_i, \beta_i, R^2_{i,\real})$, estimated by ordinary least
@@ -74,8 +74,8 @@ squares on the real return history of asset $i$ against the real
 market path. These are the targets we want the synthetic construction
 to recover. The intercept $\alpha_i$ and slope $\beta_i$ are the
 standard SIM coefficients; $R^2_{i,\real}$ is the real-data
-coefficient of determination, used by the branch-selection step in
-Section~\ref{sec:method-r2}.
+coefficient of determination, used by the branch-selection step
+defined below.
 
 \subsection{Preservation criteria}
 \label{sec:method-criteria}
@@ -107,7 +107,7 @@ $\{g_i\}_{i=1}^N$, automatic given the linearity of
 Eq.~\eqref{eq:sim-composition} in $\eps_i$. The joint structure
 itself (empirical copula, factor copula, t-copula) is supplied as a
 separate design choice, and we report cross-sectional fidelity for
-the empirical-copula choice in Section~\ref{sec:results}.
+the empirical-copula choice in the results below.
 
 The naive composition $g_i = \alpha_i + \beta_i\, g_m + \teps_i$
 satisfies SIM recovery and cross-sectional dependence but violates
@@ -129,9 +129,8 @@ variance as the generator,
   \Var[\beta_i\, g_m + \eps_i] \;=\; \sigma_{\gen,i}^2.
   \label{eq:variance-target}
 \end{equation}
-Under the independence assumption of
-Section~\ref{sec:method-setup}, the cross term in
-\eqref{eq:variance-target} vanishes and
+Under the independence assumption $\Cov[\teps_i, g_m] \approx 0$,
+the cross term in \eqref{eq:variance-target} vanishes and
 \begin{equation}
   \beta_i^2\, \sigma_m^2 \;+\; s_i^2\, \sigma_{\gen,i}^2 \;=\; \sigma_{\gen,i}^2,
 \end{equation}
@@ -241,19 +240,18 @@ We detect and flag this case so the loss of marginal fidelity is auditable.
 The pieces combine into a single procedure (Algorithm~\ref{alg:hybrid}).
 For each asset the calibrated $R^2_{i,\real}$ selects a branch: assets with
 $R^2_{i,\real} \ge R^2_{\mathrm{preserve}}$ go through the
-$R^2$-preserving construction of Section~\ref{sec:method-r2}, and the
+$R^2$-preserving construction of Eq.~\eqref{eq:r2-target}, and the
 rest go through the variance-preserving construction of
-Section~\ref{sec:method-variance} with clipping
-(Section~\ref{sec:method-clipping}) engaged when the market loading
-ratio $\rho_i$ would otherwise exceed $1 - f$. Each asset is tagged
+Eq.~\eqref{eq:scale} with the clip of Eq.~\eqref{eq:clip} engaged
+when the market loading ratio $\rho_i$ would otherwise exceed $1 - f$. Each asset is tagged
 with a construction flag $\texttt{r2-preserve}$, $\texttt{hybrid}$,
 or $\texttt{hybrid-clipped}$ that is persisted alongside the output,
 so downstream consumers can audit which path each asset took. The optional rank reorder in line~14 accepts any
 joint dependence structure (empirical copula, t-copula, factor
 copula); reordering preserves the marginal variance of $\eps_i$, so
-the variance algebra of Section~\ref{sec:method-variance} is
-unaffected and whatever cross-sectional structure is applied to
-$\eps_i$ passes through to $g_i$ unchanged.
+the variance algebra of Eq.~\eqref{eq:scale} is unaffected and
+whatever cross-sectional structure is applied to $\eps_i$ passes
+through to $g_i$ unchanged.
 
 \begin{algorithm}[t]
 \caption{Hybrid SIM composition with variance correction.}
@@ -290,8 +288,9 @@ $\eps_i$ passes through to $g_i$ unchanged.
 \end{algorithmic}
 \end{algorithm}
 
-By construction the composed series $g_i$ satisfies the preservation
-criteria of Section~\ref{sec:method-criteria} in the large-$T$ limit.
+By construction the composed series $g_i$ satisfies the three
+preservation criteria above (SIM recovery, marginal fidelity,
+cross-sectional dependence) in the large-$T$ limit.
 OLS of $g_i$ on $g_m$ recovers $\hat\alpha_i \to \alpha_i$ and
 $\hat\beta_i \to \beta_i^{\eff}$, with $\beta_i^{\eff} = \beta_i$
 unclipped and $\beta_i^{\eff}$ persisted alongside $\beta_i$ when the
@@ -312,8 +311,7 @@ tightens toward Gaussian along the market-driven axis, mildly for
 low-$\beta$ assets and noticeably at high $\beta$. The construction
 injects \emph{contemporaneous} market dependence only; lagged
 dependence (lead-lag effects, market-driven volatility clustering)
-requires a richer construction, which we return to in
-Section~\ref{sec:discussion}. The pipeline (\texttt{Pipeline.jl}, in
+requires a richer construction, which we return to in the discussion. The pipeline (\texttt{Pipeline.jl}, in
 the released code) is modest in compute: fitting the $423$ per-asset
 JumpHMM marginals runs once offline against the $2014$--$2024$ price
 histories and is cached, while GARCH(1,1)-$t$ residual paths are
@@ -321,6 +319,5 @@ simulated per (ticker, replication) at scoring time rather than
 cached, so each run consumes a fresh draw. The scoring loop across
 $423 \times 100 = 42{,}300$ per-ticker replications per composer
 runs in minutes on a 2023 MacBook Pro (Apple M2 Pro, 16~GB RAM),
-and the full six-composer sweep reported in
-Section~\ref{sec:results} completes within an hour on the same
-hardware.
+and the full six-composer sweep reported below completes within an
+hour on the same hardware.

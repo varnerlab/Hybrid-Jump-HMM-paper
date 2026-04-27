@@ -6,10 +6,9 @@
 \section{Empirical cross-term diagnostic}
 \label{sec:supp-cov}
 
-The variance-correction in Section~\ref{sec:method-variance} rests on
-the assumption $\Cov[\teps_i, g_m] \approx 0$, which is what allows
-the derivation of Eq.~\eqref{eq:scale} to drop the cross-term in the
-expansion of $\Var[g_i]$. Because the per-asset JumpHMM marginals are
+The variance correction of Eq.~\eqref{eq:scale} rests on the
+assumption $\Cov[\teps_i, g_m] \approx 0$, which is what allows the
+derivation to drop the cross-term in the expansion of $\Var[g_i]$. Because the per-asset JumpHMM marginals are
 fit to each asset's full growth-rate history, including its
 market-correlated component, the assumption is not automatic: a
 generator that picked up a residual market loading would invalidate
@@ -43,7 +42,6 @@ Eq.~\eqref{eq:scale} held in practice.
     with each per-ticker value averaged over $R = 100$ innovation
     draws. The full-return JumpHMM, residual-fit JumpHMM, and
     Gaussian generators all clustered at zero, validating the
-    independence assumption used to derive
-    Eq.~\eqref{eq:scale} in Section~\ref{sec:method-variance}.}
+    independence assumption used to derive Eq.~\eqref{eq:scale}.}
   \label{fig:cov_diag}
 \end{figure}
